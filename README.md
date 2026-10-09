@@ -23,10 +23,10 @@ Wingits checks GitHub for a newer release each time it starts and then every 5 h
 
 | Widget | Notes |
 | --- | --- |
-| **Date & Time** | Large light typography; double-click to switch 12/24-hour |
+| **Date & Time** | Large light typography. 24-hour or 12-hour (AM/PM) under **Style → Time format**, or double-click the widget |
 | **Weather** | Live conditions from [Open-Meteo](https://open-meteo.com) (no API key) with looping scenes: drifting clouds, rain, snow, fog, thunderstorms, sun and moon. Auto-locates by IP, or set a city |
 | **To-Do** | Add, tick off and delete tasks. Each task pays out XP **once** |
-| **Companion** | A pixel cat, slime or plant linked to the To-Do list — finishing a task gives XP, hearts and a hop; levelling up adds a bow tie, crown and wings (the plant simply grows taller and blooms). Click it to pet it |
+| **Companion** | A pixel cat, slime or plant linked to the To-Do list — finishing a task gives XP, hearts and a hop; levelling up adds a bow tie, crown and wings (the plant simply grows taller and blooms). Click it to pet it. The cat's tail sways endlessly without repeating, it grooms itself every 30–90 s, and from 22:00 to 07:00 it walks to its bed and sleeps (with floating z's) |
 | **Pomodoro** | Focus / short / long break ring timer with chime and notification; survives restarts |
 | **Countdown** | Days (and hours) until an event; click to edit |
 | **Sticky Note** | Autosaving, five pastel colors. Add as many as you like |

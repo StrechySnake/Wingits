@@ -56,6 +56,9 @@ Wingits.register('music', ({ root, api }) => {
       $('.mp-title').textContent = m.title || 'Unknown title';
       $('.mp-artist').textContent = [m.artist || prettyApp(m.app), m.artist && prettyApp(m.app)].filter(Boolean).join(' · ');
       if (m.artist === '' && m.album) $('.mp-artist').textContent = m.album;
+    } else if (m.error) {
+      $('.mp-title').textContent = 'Can\u2019t read what\u2019s playing';
+      $('.mp-artist').textContent = m.error.slice(0, 90);
     } else {
       $('.mp-title').textContent = 'Nothing playing';
       $('.mp-artist').textContent = 'Play something in Spotify, your browser, VLC…';

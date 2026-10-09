@@ -127,6 +127,7 @@
   const setSegOn = (sel, v) => document.querySelectorAll(`${sel} button`).forEach((b) => b.classList.toggle('on', b.dataset.v === v));
 
   seg('#seg-theme', (v) => api.setSettings({ theme: v }));
+  seg('#seg-clock', (v) => api.setSettings({ clock24: v === '24' }));
   seg('#seg-units', (v) => api.setSettings({ units: v }));
   seg('#seg-pet', (v) => api.setPet({ kind: v }));
   $('#rng-opacity').addEventListener('input', (e) => api.setSettings({ opacity: +e.target.value }));
@@ -144,6 +145,7 @@
     const s = state.settings;
     document.documentElement.dataset.theme = s.theme;
     setSegOn('#seg-theme', s.theme);
+    setSegOn('#seg-clock', s.clock24 === false ? '12' : '24');
     setSegOn('#seg-units', s.units);
     setSegOn('#seg-pet', state.pet.kind);
     $('#rng-opacity').value = s.opacity;

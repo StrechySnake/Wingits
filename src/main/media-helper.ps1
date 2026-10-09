@@ -2,12 +2,29 @@
 # via the System Media Transport Controls, one JSON object per line on stdout.
 # Reads nothing from stdin except EOF, which tells it to exit when the app closes.
 $ErrorActionPreference = 'Stop'
-[Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
-Add-Type -AssemblyName System.Runtime.WindowsRuntime
-$null = [Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager, Windows.Media.Control, ContentType = WindowsRuntime]
-$null = [Windows.Media.Control.GlobalSystemMediaTransportControlsSessionMediaProperties, Windows.Media.Control, ContentType = WindowsRuntime]
-$null = [Windows.Storage.Streams.IRandomAccessStreamWithContentType, Windows.Storage.Streams, ContentType = WindowsRuntime]
-$null = [Windows.Storage.Streams.DataReader, Windows.Storage.Streams, ContentType = WindowsRuntime]
+$logFile = Join-Path $env:TEMP 'wingits-media.log'
+function Log($text) {
+  try { Add-Content -Path $logFile -Value ("{0:s} {1}" -f (Get-Date), $text) } catch { }
+}
+# Raw UTF-8 stdout/stdin streams: avoids Console encoding setters, which can throw when redirected.
+$utf8 = New-Object System.Text.UTF8Encoding($false)
+$stdout = New-Object System.IO.StreamWriter([Console]::OpenStandardOutput(), $utf8)
+$stdout.AutoFlush = $true
+$stdin = New-Object System.IO.StreamReader([Console]::OpenStandardInput(), $utf8)
+function Emit($obj) {
+  $stdout.WriteLine(($obj | ConvertTo-Json -Compress -Depth 4))
+}
+try {
+  Add-Type -AssemblyName System.Runtime.WindowsRuntime
+  $null = [Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager,Windows.Media.Control,ContentType=WindowsRuntime]
+  $null = [Windows.Media.Control.GlobalSystemMediaTransportControlsSessionMediaProperties,Windows.Media.Control,ContentType=WindowsRuntime]
+  $null = [Windows.Storage.Streams.IRandomAccessStreamWithContentType,Windows.Storage.Streams,ContentType=WindowsRuntime]
+  $null = [Windows.Storage.Streams.DataReader,Windows.Storage.Streams,ContentType=WindowsRuntime]
+} catch {
+  Log "setup failed: $($_.Exception.Message)"
+  Emit @{ active = $false; error = "Windows media APIs unavailable: $($_.Exception.Message)" }
+  exit 1
+}
 
 $asTaskGeneric = ([System.WindowsRuntimeSystemExtensions].GetMethods() | Where-Object {
   $_.Name -eq 'AsTask' -and $_.GetParameters().Count -eq 1 -and $_.GetParameters()[0].ParameterType.Name -eq 'IAsyncOperation`1'
@@ -17,18 +34,15 @@ function Await($op, $type) {
   $null = $t.Wait(-1)
   $t.Result
 }
-$logFile = Join-Path $env:TEMP 'wingits-media.log'
-function Log($text) {
-  try { Add-Content -Path $logFile -Value ("{0:s} {1}" -f (Get-Date), $text) } catch { }
-}
-function Emit($obj) {
-  [Console]::Out.WriteLine(($obj | ConvertTo-Json -Compress -Depth 4))
-  [Console]::Out.Flush()
-}
-
 $mgrType = [Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager]
 $propsType = [Windows.Media.Control.GlobalSystemMediaTransportControlsSessionMediaProperties]
-$mgr = Await ($mgrType::RequestAsync()) $mgrType
+try {
+  $mgr = Await ($mgrType::RequestAsync()) $mgrType
+} catch {
+  Log "session manager failed: $($_.Exception.Message)"
+  Emit @{ active = $false; error = "Could not open the media session manager: $($_.Exception.Message)" }
+  exit 1
+}
 
 function Get-Session {
   foreach ($s in $mgr.GetSessions()) {
@@ -37,17 +51,19 @@ function Get-Session {
   return $mgr.GetCurrentSession()
 }
 
-$readTask = [Console]::In.ReadLineAsync()
+$readTask = $stdin.ReadLineAsync()
 $lastKey = ''
 $haveArt = $false
 $artTries = 0
 $tick = 0
 
 while ($true) {
-  if ($readTask.IsCompleted) { break }       # parent closed stdin: exit
-  $forceEmit = $false
+  if ($readTask.IsCompleted) {
+    if ($null -eq $readTask.Result) { break }   # EOF: the app closed our stdin, so exit
+    $readTask = $stdin.ReadLineAsync()
+  }
 
-  if ($forceEmit -or ($tick % 4 -eq 0)) {
+  if ($tick % 4 -eq 0) {
     try {
       $s = Get-Session
       if (-not $s) {
@@ -121,6 +137,7 @@ while ($true) {
         Emit $msg
       }
     } catch {
+      Log "poll failed: $($_.Exception.Message)"
       Emit @{ active = $false; error = "$($_.Exception.Message)" }
     }
   }

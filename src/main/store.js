@@ -11,6 +11,7 @@ const DEFAULTS = () => ({
     city: '',             // empty = locate by IP
     widgetsVisible: true,
     autoUpdateCheck: true,
+    clock24: true,        // false = 12-hour clock with AM/PM
   },
   widgets: [],            // { id, type, x, y }
   tasks: [],              // { id, text, done, rewarded }

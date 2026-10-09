@@ -46,11 +46,15 @@ class Media extends EventEmitter {
         if (line) this.handleLine(line);
       }
     });
-    child.stderr.on('data', () => {});
-    child.on('error', () => {});
-    child.on('exit', () => {
+    let stderr = '';
+    child.stderr.setEncoding('utf8');
+    child.stderr.on('data', (d) => { stderr = (stderr + d).slice(-400); });
+    child.on('error', (e) => { stderr = `Could not start the media helper: ${e.message}`; });
+    child.on('exit', (code) => {
       this.proc = null;
-      this.state = { active: false, supported: true };
+      // Keep any error the helper itself reported; otherwise surface what it printed on stderr.
+      const error = this.state.error || stderr.trim().split('\n')[0] || (code ? `Media helper exited (code ${code})` : '');
+      this.state = { active: false, supported: true, error: error || undefined };
       this.emit('state', this.state);
       if (this.wanted) {
         setTimeout(() => this.wanted && this.start(), this.restartDelay);

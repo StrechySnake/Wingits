@@ -1,4 +1,7 @@
-Wingits.register('clock', ({ root, inst, setInst }) => {
+Wingits.register('clock', (ctx) => {
+  const { root, api } = ctx;
+  // 24-hour ("military") vs 12-hour is a global setting, changed in the main window or by double-click.
+  const is24 = () => ctx.state.settings.clock24 !== false;
   root.innerHTML = `
     <div class="clock">
       <div class="greet label"></div>
@@ -12,7 +15,7 @@ Wingits.register('clock', ({ root, inst, setInst }) => {
 
   function tick() {
     const d = new Date();
-    const h24 = inst().h24 !== false;
+    const h24 = is24();
     const h = h24 ? d.getHours() : (d.getHours() % 12 || 12);
     el.hm.textContent = `${h24 ? pad(h) : h}:${pad(d.getMinutes())}`;
     el.sec.textContent = pad(d.getSeconds());
@@ -23,7 +26,7 @@ Wingits.register('clock', ({ root, inst, setInst }) => {
     if (date !== lastDate) { el.date.textContent = date; lastDate = date; }
   }
 
-  root.addEventListener('dblclick', () => { setInst({ h24: inst().h24 === false }); setTimeout(tick, 30); });
+  root.addEventListener('dblclick', () => api.setSettings({ clock24: !is24() }));
   root.title = 'Double-click to switch 12/24-hour';
   tick();
   setInterval(tick, 500);
