@@ -1,0 +1,44 @@
+{
+  "name": "wingits",
+  "version": "0.1.0",
+  "description": "Soft, transparent desktop widgets for Windows — weather, tasks, a pet that grows with your to-dos, and more.",
+  "main": "src/main/main.js",
+  "author": "Wingits",
+  "license": "MIT",
+  "homepage": "https://github.com/StrechySnake/Wingits",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/StrechySnake/Wingits.git"
+  },
+  "scripts": {
+    "start": "electron .",
+    "icon": "node scripts/make-icon.js",
+    "dist": "electron-builder --win --publish never",
+    "dist:dir": "electron-builder --win --dir --publish never"
+  },
+  "devDependencies": {
+    "electron": "^44.7.0",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "com.wingits.app",
+    "productName": "Wingits",
+    "copyright": "Copyright © Wingits",
+    "directories": { "output": "dist" },
+    "files": ["src/**/*", "build/icon.png", "package.json"],
+    "win": {
+      "icon": "build/icon.png",
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ]
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "runAfterFinish": true,
+      "artifactName": "Wingits-Setup-${version}.${ext}"
+    },
+    "portable": { "artifactName": "Wingits-Portable-${version}.${ext}" }
+  }
+}

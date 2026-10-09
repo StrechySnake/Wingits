@@ -1,0 +1,50 @@
+.shell { position: absolute; inset: 14px; }
+
+.card {
+  position: relative;
+  width: 100%; height: 100%;
+  border-radius: var(--radius-xl);
+  background: var(--glass);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  padding: 18px 20px;
+  text-shadow: var(--shadow-text);
+  animation: pop-in .5s var(--ease) both;
+}
+.card.bare { background: none; border: 0; box-shadow: none; overflow: visible; padding: 0; }
+@keyframes pop-in { from { opacity: 0; transform: scale(.94) translateY(6px); } to { opacity: 1; transform: none; } }
+
+.close {
+  position: absolute; top: 10px; right: 10px; z-index: 20;
+  width: 24px; height: 24px; border-radius: 50%;
+  display: grid; place-items: center;
+  font-size: 15px; line-height: 1;
+  background: var(--faint); color: var(--text);
+  opacity: 0; transform: scale(.8);
+  transition: opacity .2s, transform .2s var(--ease), background .2s;
+}
+.card:hover > .close { opacity: .85; transform: none; }
+.close:hover { background: rgba(255, 90, 110, .85); color: #fff; opacity: 1 !important; }
+
+.label { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.muted { color: var(--muted); }
+
+.round-btn {
+  width: 38px; height: 38px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--faint);
+  transition: transform .2s var(--ease), background .2s;
+}
+.round-btn:hover { background: rgba(255, 255, 255, .22); transform: scale(1.06); }
+.round-btn:active { transform: scale(.94); }
+.round-btn.primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; box-shadow: 0 6px 16px rgba(155, 140, 255, .4); }
+.round-btn svg { width: 16px; height: 16px; fill: currentColor; }
+
+.pill-input {
+  width: 100%; height: 34px; padding: 0 14px;
+  border-radius: 99px; border: 1px solid var(--border);
+  background: var(--faint); transition: background .2s, border-color .2s;
+}
+.pill-input:focus { background: rgba(255, 255, 255, .16); border-color: var(--accent); }
+.pill-input::placeholder { color: var(--muted); }

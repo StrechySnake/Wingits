@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'">
+  <title>Wingits</title>
+  <link rel="stylesheet" href="../common.css">
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <div class="window">
+    <header class="titlebar">
+      <div class="brand">
+        <img src="../../../build/icon.png" alt="" class="logo">
+        <div><b>Wingits</b><span>Drag widgets onto your desktop</span></div>
+      </div>
+      <div class="win-btns">
+        <button id="btn-min" title="Hide to tray" aria-label="Hide to tray"><i></i></button>
+        <button id="btn-quit" class="danger" title="Quit Wingits" aria-label="Quit Wingits"><svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></button>
+      </div>
+    </header>
+
+    <main>
+      <aside class="panel library">
+        <h2>Widgets</h2>
+        <p class="hint">Drag onto the preview, or tap +</p>
+        <div id="library" class="lib-list"></div>
+      </aside>
+
+      <section class="stage">
+        <div class="stage-head">
+          <h2>Your desktop</h2>
+          <div class="stage-actions">
+            <button id="btn-visible" class="pill-btn">Hide widgets</button>
+          </div>
+        </div>
+        <div id="screen" class="screen">
+          <div class="screen-hint" id="screen-hint"><span>✨</span>Drop widgets here</div>
+          <div class="taskbar"><i></i><i></i><i></i><i></i></div>
+        </div>
+        <p class="hint center">Drag the tiles to reposition — or grab any widget directly on your real desktop.</p>
+      </section>
+
+      <aside class="panel settings">
+        <h2>Style</h2>
+        <div class="field"><label>Theme</label>
+          <div class="seg" id="seg-theme"><button data-v="dark">Dark glass</button><button data-v="light">Light glass</button></div></div>
+        <div class="field"><label>Transparency <output id="out-opacity"></output></label>
+          <input type="range" id="rng-opacity" min="0.1" max="0.95" step="0.05"></div>
+
+        <h2>Behavior</h2>
+        <label class="toggle"><span>Keep widgets on top</span><input type="checkbox" id="chk-top"><i></i></label>
+        <label class="toggle"><span>Launch at login</span><input type="checkbox" id="chk-login"><i></i></label>
+
+        <h2>Weather</h2>
+        <div class="field"><div class="seg" id="seg-units"><button data-v="c">°C</button><button data-v="f">°F</button></div></div>
+        <div class="field"><input class="pill-input" id="inp-city" placeholder="City (blank = auto-detect)" maxlength="60"></div>
+
+        <h2>Companion</h2>
+        <div class="field"><div class="seg" id="seg-pet"><button data-v="cat">🐱 Cat</button><button data-v="slime">🫧 Slime</button><button data-v="plant">🌱 Plant</button></div></div>
+        <div class="field"><input class="pill-input" id="inp-pet" maxlength="16" placeholder="Name"></div>
+        <div class="pet-stats"><div class="pet-stats-line"><span id="pet-lv"></span><span id="pet-xp" class="muted"></span></div><div class="bar"><i id="pet-bar"></i></div></div>
+      </aside>
+    </main>
+  </div>
+  <script src="../../shared/registry.js"></script>
+  <script src="../../shared/progress.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>
