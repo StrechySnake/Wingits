@@ -1,7 +1,7 @@
-const { app, BrowserWindow, Tray, Menu, ipcMain, screen, dialog, nativeImage, shell } = require('electron');
+const { app, BrowserWindow, Tray, Menu, ipcMain, screen, nativeImage, shell, session, desktopCapturer } = require('electron');
 const path = require('path');
 const { Store } = require('./store');
-const { readTags } = require('./id3');
+const { Media } = require('./media');
 const { createStats } = require('./sysstats');
 const REG = require('../shared/registry');
 const { XP_PER_TASK } = require('../shared/progress');
@@ -13,7 +13,7 @@ const DASH_W = 1072, DASH_H = 700; // includes the transparent shadow margin
 
 if (!app.requestSingleInstanceLock()) { app.quit(); process.exit(0); }
 
-let store, stats, tray, dashboard;
+let store, stats, tray, dashboard, media;
 let quitting = false;
 const widgetWins = new Map(); // id -> BrowserWindow
 
@@ -55,7 +55,8 @@ function clampToDisplays(x, y, w, h) {
 function createWidgetWindow(w) {
   const def = REG.widgets[w.type];
   if (!def || widgetWins.has(w.id)) return;
-  const width = def.w + REG.PAD * 2, height = def.h + REG.PAD * 2;
+  const scale = REG.clampScale(w.type, w.scale || 1);
+  const { width, height } = REG.windowSize(w.type, scale);
   const pos = clampToDisplays(w.x, w.y, width, height);
   const win = new BrowserWindow({
     ...pos, width, height,
@@ -66,8 +67,14 @@ function createWidgetWindow(w) {
     webPreferences: { preload: PRELOAD, sandbox: true, contextIsolation: true, nodeIntegration: false },
   });
   win.setMenu(null);
+  win._wtype = w.type;
   secureWebContents(win);
   win.loadFile(path.join(RENDERER, 'widgets', 'widget.html'), { query: { id: w.id, type: w.type } });
+  if (w.type === 'music') {
+    // getDisplayMedia (system-audio loopback for the visualizer) needs a user gesture; grant one.
+    win.webContents.once('did-finish-load', () =>
+      win.webContents.executeJavaScript('window.__startCapture && window.__startCapture()', true).catch(() => {}));
+  }
   win.once('ready-to-show', () => { if (S().settings.widgetsVisible) win.showInactive(); });
 
   let t;
@@ -82,6 +89,7 @@ function createWidgetWindow(w) {
   });
   win.on('closed', () => widgetWins.delete(w.id));
   widgetWins.set(w.id, win);
+  syncMedia();
 }
 
 function addWidget(type, x, y) {
@@ -103,7 +111,17 @@ function removeWidget(id) {
   const win = widgetWins.get(id);
   widgetWins.delete(id);
   if (win && !win.isDestroyed()) win.destroy();
+  syncMedia();
   emit('layout');
+}
+
+function musicWindows() {
+  return [...widgetWins.values()].filter((w) => w._wtype === 'music' && !w.isDestroyed());
+}
+/** Run the media helper only while a Now Playing widget exists. */
+function syncMedia() {
+  if (!media) return;
+  if (musicWindows().length) media.start(); else media.stop();
 }
 
 function setWidgetsVisible(visible) {
@@ -278,15 +296,19 @@ function registerIpc() {
     return { bounds: d.workArea, full: d.bounds };
   });
 
-  ipcMain.handle('media:pick', async (e) => {
-    const parent = BrowserWindow.fromWebContents(e.sender);
-    const r = await dialog.showOpenDialog(parent, {
-      title: 'Add music', properties: ['openFile', 'multiSelections'],
-      filters: [{ name: 'Audio', extensions: ['mp3', 'm4a', 'aac', 'wav', 'flac', 'ogg', 'opus'] }],
-    });
-    return r.canceled ? [] : r.filePaths;
+  ipcMain.handle('media:get', () => ({ state: media.state, art: media.art }));
+  ipcMain.handle('media:cmd', (_e, cmd, arg) => media.send(cmd, arg));
+
+  ipcMain.handle('widget:resize', (_e, id, scale) => {
+    const rec = S().widgets.find((q) => q.id === id);
+    const win = widgetWins.get(id);
+    if (!rec || !win) return;
+    rec.scale = REG.clampScale(rec.type, scale);
+    const b = win.getBounds();
+    const { width, height } = REG.windowSize(rec.type, rec.scale);
+    win.setBounds({ x: b.x, y: b.y, width, height });
+    emit('layout');
   });
-  ipcMain.handle('media:meta', (_e, file) => readTags(String(file)));
 
   ipcMain.handle('dash:minimize', () => dashboard?.hide());
   ipcMain.handle('dash:open', () => showDashboard());
@@ -312,6 +334,15 @@ app.whenReady().then(() => {
   app.setAppUserModelId('com.wingits.app');
   store = new Store(app.getPath('userData'));
   stats = createStats();
+  media = new Media();
+  media.on('state', (st) => musicWindows().forEach((w) => sendTo(w, 'media', st)));
+  media.on('art', (a) => musicWindows().forEach((w) => sendTo(w, 'media-art', a)));
+  // System-audio loopback powers the visualizer in the Now Playing widget.
+  session.defaultSession.setDisplayMediaRequestHandler((_req, cb) => {
+    desktopCapturer.getSources({ types: ['screen'] })
+      .then((sources) => cb({ video: sources[0], audio: 'loopback' }))
+      .catch(() => cb({}));
+  });
   registerIpc();
   seedFirstRun();
   for (const w of S().widgets) createWidgetWindow(w);
@@ -320,5 +351,5 @@ app.whenReady().then(() => {
 });
 
 app.on('second-instance', showDashboard);
-app.on('before-quit', () => { quitting = true; store?.flush(); });
+app.on('before-quit', () => { quitting = true; media?.stop(); store?.flush(); });
 app.on('window-all-closed', (e) => { if (!quitting) e.preventDefault(); });

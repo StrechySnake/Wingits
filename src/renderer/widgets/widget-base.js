@@ -36,19 +36,64 @@
     const shell = document.getElementById('shell');
     shell.innerHTML = `<div class="card ${def.bare ? 'bare' : ''}" data-type="${type}">
       <button class="close" title="Remove widget" aria-label="Remove widget">×</button>
-      <div class="body" style="height:100%"></div></div>`;
+      <div class="body" style="height:100%"></div>
+      <div class="grip" title="Drag to resize · double-click to reset" data-nodrag></div></div>`;
     const card = shell.firstElementChild;
     const root = card.querySelector('.body');
     card.querySelector('.close').addEventListener('click', () => api.removeWidget(id));
 
-    // Drag the whole card; interactive controls opt out.
+    // Cards have a fixed design size; resizing scales them with CSS zoom (clamped per widget type).
+    const [minS, maxS] = WingitsRegistry.scaleRange(type);
+    let scale = WingitsRegistry.clampScale(type, (state.widgets.find((w) => w.id === id) || {}).scale || 1);
+    const applyScale = (s) => { scale = s; card.style.zoom = s; };
+    card.style.width = def.w + 'px';
+    card.style.height = def.h + 'px';
+    applyScale(scale);
+
+    const grip = card.querySelector('.grip');
+    grip.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      grip.setPointerCapture(e.pointerId);
+      const s0 = scale, sx = e.screenX, sy = e.screenY;
+      let raf = 0, next = s0;
+      const move = (ev) => {
+        const dx = ev.screenX - sx, dy = ev.screenY - sy;
+        next = WingitsRegistry.clampScale(type, s0 + (dx * def.w + dy * def.h) / (def.w * def.w + def.h * def.h));
+        if (!raf) raf = requestAnimationFrame(() => { raf = 0; applyScale(next); api.resizeWidget(id, next); });
+      };
+      const up = () => {
+        grip.removeEventListener('pointermove', move);
+        grip.removeEventListener('pointerup', up);
+        grip.removeEventListener('pointercancel', up);
+      };
+      grip.addEventListener('pointermove', move);
+      grip.addEventListener('pointerup', up);
+      grip.addEventListener('pointercancel', up);
+    });
+    grip.addEventListener('dblclick', () => { applyScale(1); api.resizeWidget(id, 1); });
+
+    // Drag the whole card; interactive controls opt out. Pointer capture only starts once the
+    // pointer actually moves, so plain clicks still reach the element that was pressed.
     const interactive = 'button, input, textarea, select, a, [data-nodrag]';
     card.addEventListener('pointerdown', (e) => {
       if (e.button !== 0 || e.target.closest(interactive)) return;
       const start = { sx: e.screenX, sy: e.screenY, x: window.screenX, y: window.screenY };
-      card.setPointerCapture(e.pointerId);
-      const move = (ev) => api.moveWidget(id, start.x + ev.screenX - start.sx, start.y + ev.screenY - start.sy);
-      const up = () => { card.removeEventListener('pointermove', move); card.removeEventListener('pointerup', up); card.removeEventListener('pointercancel', up); };
+      let dragging = false;
+      const move = (ev) => {
+        const dx = ev.screenX - start.sx, dy = ev.screenY - start.sy;
+        if (!dragging) {
+          if (Math.hypot(dx, dy) < 4) return;
+          dragging = true;
+          card.setPointerCapture(ev.pointerId);
+        }
+        api.moveWidget(id, start.x + dx, start.y + dy);
+      };
+      const up = () => {
+        card.removeEventListener('pointermove', move);
+        card.removeEventListener('pointerup', up);
+        card.removeEventListener('pointercancel', up);
+      };
       card.addEventListener('pointermove', move);
       card.addEventListener('pointerup', up);
       card.addEventListener('pointercancel', up);

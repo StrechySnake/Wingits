@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer, webUtils } = require('electron');
+const { contextBridge, ipcRenderer } = require('electron');
 
 const invoke = (ch, ...a) => ipcRenderer.invoke(ch, ...a);
 
@@ -28,9 +28,19 @@ contextBridge.exposeInMainWorld('wingits', {
   getStats: () => invoke('sys:stats'),
   getScreen: () => invoke('screen:info'),
 
-  pickMusic: () => invoke('media:pick'),
-  mediaMeta: (f) => invoke('media:meta', f),
-  pathForFile: (f) => webUtils.getPathForFile(f),
+  getMedia: () => invoke('media:get'),
+  mediaCmd: (cmd, arg) => invoke('media:cmd', cmd, arg),
+  onMedia: (cb) => {
+    const h = (_e, s) => cb(s);
+    ipcRenderer.on('media', h);
+    return () => ipcRenderer.removeListener('media', h);
+  },
+  onMediaArt: (cb) => {
+    const h = (_e, a) => cb(a);
+    ipcRenderer.on('media-art', h);
+    return () => ipcRenderer.removeListener('media-art', h);
+  },
+  resizeWidget: (id, scale) => invoke('widget:resize', id, scale),
 
   minimize: () => invoke('dash:minimize'),
   quit: () => invoke('app:quit'),

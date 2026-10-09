@@ -26,13 +26,14 @@ No release yet? Open **Actions → Build & Release → Run workflow**, then down
 | **Pomodoro** | Focus / short / long break ring timer with chime and notification; survives restarts |
 | **Countdown** | Days (and hours) until an event; click to edit |
 | **Sticky Note** | Autosaving, five pastel colors. Add as many as you like |
-| **Music** | Mini player with album art (read from ID3 tags), progress, prev/next. Drop audio files onto it or press **+** |
+| **Now Playing** | Shows whatever Windows is playing — Spotify, YouTube in your browser, VLC, Apple Music, media files in most players — with big album art, title/artist, progress (click to seek), previous / play-pause / next, and a live visualizer driven by your system audio. No background; text floats on your wallpaper |
 | **System** | Soft circular CPU and RAM dials |
 
 ## Using it
 
 * **Add** – drag a card from the library onto the desktop preview (it lands at the matching spot on your screen) or press **+**.
 * **Move** – drag a tile in the preview, or drag the widget itself on your desktop.
+* **Resize** – hover a widget and drag the little corner grip (double-click it to reset). Every widget has a minimum and maximum size (0.6×–1.6×; Now Playing 0.6×–1.5×).
 * **Remove** – hover a widget and press **×**.
 * **Style** – dark/light glass and transparency apply to every widget live.
 * Closing the main window keeps Wingits running in the system tray (right-click it to hide widgets or quit). Layout, tasks, notes, XP and timers are saved automatically in `%APPDATA%/Wingits/wingits-state.json`.
@@ -64,7 +65,7 @@ src/renderer/    dashboard UI and one small module per widget (widgets/types/*.j
 ## Known limitations
 
 * Widgets are ordinary always-below-apps windows, not part of the desktop itself, so **Win + D** (Show desktop) may hide them. Enable **Keep widgets on top** if you want them always visible.
-* The music widget plays files you give it; it does not read what other apps (Spotify, etc.) are playing.
+* Now Playing reads Windows' media session (the same one behind the volume flyout), so it shows any player that reports to Windows. A player that doesn't (some older or portable ones) won't appear. The visualizer uses system-audio loopback; if that is unavailable it falls back to a gentle idle animation (click the bars to retry).
 * Windows only has been designed for; Linux/macOS builds are untested.
 
 ## License

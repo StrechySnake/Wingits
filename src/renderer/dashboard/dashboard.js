@@ -60,11 +60,11 @@
 
   /* ---------- desktop preview tiles ---------- */
   function placeTile(tile, w) {
-    const s = scale(), d = DEFS[w.type];
+    const s = scale(), size = WingitsRegistry.windowSize(w.type, w.scale || 1);
     tile.style.left = (w.x - B.x) * s + 'px';
     tile.style.top = (w.y - B.y) * s + 'px';
-    tile.style.width = (d.w + PAD * 2) * s + 'px';
-    tile.style.height = (d.h + PAD * 2) * s + 'px';
+    tile.style.width = size.width * s + 'px';
+    tile.style.height = size.height * s + 'px';
   }
 
   function renderTiles() {
@@ -97,8 +97,8 @@
     if (e.target.closest('.t-x')) { api.removeWidget(tile.dataset.id); return; }
     const w = state.widgets.find((q) => q.id === tile.dataset.id);
     if (!w) return;
-    const s = scale(), d = DEFS[w.type];
-    const ww = d.w + PAD * 2, hh = d.h + PAD * 2;
+    const s = scale();
+    const { width: ww, height: hh } = WingitsRegistry.windowSize(w.type, w.scale || 1);
     const ox = e.clientX, oy = e.clientY, sx = w.x, sy = w.y;
     dragging = true;
     tile.classList.add('dragging');
