@@ -14,6 +14,8 @@ class Media extends EventEmitter {
     this.state = { active: false, supported: this.supported() };
     this.art = null; // { key, art }
     this.restartDelay = 1000;
+    this.noArt = new Map();   // key -> consecutive updates without artwork
+    this.lookedUp = new Set();
   }
 
   // WINGITS_MEDIA_HELPER lets tests substitute a fake helper script.
@@ -65,12 +67,36 @@ class Media extends EventEmitter {
     if (art && msg.key) { this.art = { key: msg.key, art }; this.emit('art', this.art); }
     this.state = { ...rest, supported: true };
     this.emit('state', this.state);
+    this.maybeLookupArt(msg);
   }
 
-  send(cmd, arg) {
-    if (!this.proc || !this.proc.stdin.writable) return;
-    if (!['toggle', 'next', 'prev', 'seek'].includes(cmd)) return;
-    this.proc.stdin.write(cmd + (cmd === 'seek' ? ' ' + Number(arg || 0) : '') + '\n');
+  /** Players sometimes expose no thumbnail; fall back to the iTunes Search artwork for artist + title. */
+  maybeLookupArt(msg) {
+    if (!msg.active || !msg.key || !msg.title || !msg.artist) return;
+    if (this.art && this.art.key === msg.key) return;
+    if (this.lookedUp.has(msg.key)) return;
+    const n = (this.noArt.get(msg.key) || 0) + 1;
+    this.noArt.set(msg.key, n);
+    if (n < 4) return; // give the player ~4s to supply its own artwork first
+    this.lookedUp.add(msg.key);
+    if (this.lookedUp.size > 50) this.lookedUp.delete(this.lookedUp.values().next().value);
+    this.lookupArt(msg).catch(() => {});
+  }
+
+  async lookupArt(msg) {
+    const term = encodeURIComponent(`${msg.artist} ${msg.title}`);
+    const r = await fetch(`https://itunes.apple.com/search?term=${term}&media=music&entity=song&limit=1`, { signal: AbortSignal.timeout(10000) });
+    if (!r.ok) return;
+    const url = ((await r.json()).results || [])[0]?.artworkUrl100;
+    if (!url) return;
+    const img = await fetch(url.replace(/\/\d+x\d+(bb)?\./, '/600x600bb.'), { signal: AbortSignal.timeout(10000) });
+    if (!img.ok) return;
+    const mime = img.headers.get('content-type') || 'image/jpeg';
+    const art = `data:${mime};base64,${Buffer.from(await img.arrayBuffer()).toString('base64')}`;
+    if (this.state.key === msg.key) { // still the same track
+      this.art = { key: msg.key, art };
+      this.emit('art', this.art);
+    }
   }
 
   stop() {

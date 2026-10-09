@@ -298,7 +298,6 @@ function registerIpc() {
   });
 
   ipcMain.handle('media:get', () => ({ state: media.state, art: media.art }));
-  ipcMain.handle('media:cmd', (_e, cmd, arg) => media.send(cmd, arg));
 
   ipcMain.handle('widget:resize', (_e, id, scale) => {
     const rec = S().widgets.find((q) => q.id === id);

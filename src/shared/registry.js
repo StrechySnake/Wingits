@@ -11,7 +11,7 @@
     pomodoro:  { label: 'Pomodoro',    icon: '🍅', hue: 8,   w: 250, h: 285, desc: 'Focus and break timer' },
     countdown: { label: 'Countdown',   icon: '⏳', hue: 320, w: 250, h: 170, desc: 'Days until your next event' },
     notes:     { label: 'Sticky Note', icon: '📝', hue: 50,  w: 240, h: 240, desc: 'Jot something down' },
-    music:     { label: 'Now Playing', icon: '🎵', hue: 285, w: 430, h: 220, desc: 'Shows Spotify & co., live visualizer', single: true, bare: true, minScale: 0.6, maxScale: 1.5 },
+    music:     { label: 'Now Playing', icon: '🎵', hue: 285, w: 430, h: 220, desc: 'What\'s playing, with live visualizer', single: true, bare: true, minScale: 0.6, maxScale: 1.5 },
     system:    { label: 'System',      icon: '📈', hue: 175, w: 270, h: 150, desc: 'CPU and RAM dials' },
   };
 

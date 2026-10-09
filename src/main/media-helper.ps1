@@ -1,12 +1,13 @@
 # Wingits media helper: reports whatever Windows thinks is playing (Spotify, browsers, VLC, ...)
 # via the System Media Transport Controls, one JSON object per line on stdout.
-# Commands arrive on stdin: toggle | next | prev | seek <seconds>
+# Reads nothing from stdin except EOF, which tells it to exit when the app closes.
 $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
 Add-Type -AssemblyName System.Runtime.WindowsRuntime
 $null = [Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager, Windows.Media.Control, ContentType = WindowsRuntime]
 $null = [Windows.Media.Control.GlobalSystemMediaTransportControlsSessionMediaProperties, Windows.Media.Control, ContentType = WindowsRuntime]
 $null = [Windows.Storage.Streams.IRandomAccessStreamWithContentType, Windows.Storage.Streams, ContentType = WindowsRuntime]
+$null = [Windows.Storage.Streams.DataReader, Windows.Storage.Streams, ContentType = WindowsRuntime]
 
 $asTaskGeneric = ([System.WindowsRuntimeSystemExtensions].GetMethods() | Where-Object {
   $_.Name -eq 'AsTask' -and $_.GetParameters().Count -eq 1 -and $_.GetParameters()[0].ParameterType.Name -eq 'IAsyncOperation`1'
@@ -15,6 +16,10 @@ function Await($op, $type) {
   $t = $asTaskGeneric.MakeGenericMethod($type).Invoke($null, @($op))
   $null = $t.Wait(-1)
   $t.Result
+}
+$logFile = Join-Path $env:TEMP 'wingits-media.log'
+function Log($text) {
+  try { Add-Content -Path $logFile -Value ("{0:s} {1}" -f (Get-Date), $text) } catch { }
 }
 function Emit($obj) {
   [Console]::Out.WriteLine(($obj | ConvertTo-Json -Compress -Depth 4))
@@ -39,25 +44,8 @@ $artTries = 0
 $tick = 0
 
 while ($true) {
+  if ($readTask.IsCompleted) { break }       # parent closed stdin: exit
   $forceEmit = $false
-  if ($readTask.IsCompleted) {
-    $line = $readTask.Result
-    if ($null -eq $line) { break }          # parent closed stdin: exit
-    $readTask = [Console]::In.ReadLineAsync()
-    try {
-      $parts = $line.Trim().Split(' ')
-      $s = Get-Session
-      if ($s) {
-        switch ($parts[0]) {
-          'toggle' { $null = Await ($s.TryTogglePlayPauseAsync()) ([bool]) }
-          'next'   { $null = Await ($s.TrySkipNextAsync()) ([bool]) }
-          'prev'   { $null = Await ($s.TrySkipPreviousAsync()) ([bool]) }
-          'seek'   { $null = Await ($s.TryChangePlaybackPositionAsync([long]([double]$parts[1] * 10000000))) ([bool]) }
-        }
-      }
-    } catch { }
-    $forceEmit = $true
-  }
 
   if ($forceEmit -or ($tick % 4 -eq 0)) {
     try {
@@ -72,21 +60,40 @@ while ($true) {
         if ($key -ne $lastKey) { $lastKey = $key; $haveArt = $false; $artTries = 0 }
 
         $art = $null
-        if (-not $haveArt -and $artTries -lt 8 -and $p.Thumbnail) {
+        if (-not $haveArt -and $artTries -lt 20 -and $p.Thumbnail) {
           $artTries++
           try {
             $st = Await ($p.Thumbnail.OpenReadAsync()) ([Windows.Storage.Streams.IRandomAccessStreamWithContentType])
-            $net = [System.IO.WindowsRuntimeStreamExtensions]::AsStreamForRead($st)
-            $ms = New-Object System.IO.MemoryStream
-            $net.CopyTo($ms)
-            if ($ms.Length -gt 0) {
+            $bytes = $null
+            try {   # method 1: DataReader
+              $size = [uint32]$st.Size
+              if ($size -gt 0) {
+                $reader = [Windows.Storage.Streams.DataReader]::new($st)
+                $null = Await ($reader.LoadAsync($size)) ([uint32])
+                $bytes = New-Object byte[] $size
+                $reader.ReadBytes($bytes)
+                $reader.DetachStream() | Out-Null
+              }
+            } catch { Log "thumbnail DataReader failed: $($_.Exception.Message)" }
+            if (-not $bytes -or $bytes.Length -eq 0) {
+              try {   # method 2: classic .NET stream adapter
+                $net = [System.IO.WindowsRuntimeStreamExtensions]::AsStreamForRead($st)
+                $ms = New-Object System.IO.MemoryStream
+                $net.CopyTo($ms)
+                $bytes = $ms.ToArray()
+              } catch { Log "thumbnail AsStreamForRead failed: $($_.Exception.Message)" }
+            }
+            if ($bytes -and $bytes.Length -gt 0) {
               $mime = $st.ContentType
               if (-not $mime) { $mime = 'image/jpeg' }
-              $art = "data:$mime;base64," + [Convert]::ToBase64String($ms.ToArray())
+              $art = "data:$mime;base64," + [Convert]::ToBase64String($bytes)
               $haveArt = $true
-            }
-            $net.Dispose(); $st.Dispose()
-          } catch { }
+            } else { Log "no thumbnail bytes for $key (try $artTries)" }
+            $st.Dispose()
+          } catch { Log "thumbnail failed: $($_.Exception.Message)" }
+        } elseif (-not $p.Thumbnail -and $artTries -eq 0) {
+          $artTries = 99
+          Log "player reports no thumbnail for $key"
         }
 
         $playing = ($info.PlaybackStatus -eq 'Playing')

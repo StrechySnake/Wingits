@@ -1,5 +1,4 @@
 Wingits.register('music', ({ root, api }) => {
-  const { icons, esc } = Wingits;
   const BARS = 30;
 
   root.innerHTML = `
@@ -14,12 +13,7 @@ Wingits.register('music', ({ root, api }) => {
           <div class="mp-artist">Play something in Spotify, your browser, VLC…</div>
         </div>
         <canvas class="mp-viz" title="Click to re-link system audio"></canvas>
-        <div class="mp-progress"><span class="t-cur">0:00</span><div class="mp-bar" data-nodrag><i></i></div><span class="t-len">0:00</span></div>
-        <div class="mp-ctl">
-          <button class="round-btn" data-act="prev" title="Previous">${icons.prev}</button>
-          <button class="round-btn primary big" data-act="toggle" title="Play / pause">${icons.play}</button>
-          <button class="round-btn" data-act="next" title="Next">${icons.next}</button>
-        </div>
+        <div class="mp-progress"><span class="t-cur">0:00</span><div class="mp-bar"><i></i></div><span class="t-len">0:00</span></div>
       </div>
     </div>`;
   const $ = (s) => root.querySelector(s);
@@ -67,9 +61,6 @@ Wingits.register('music', ({ root, api }) => {
       $('.mp-artist').textContent = 'Play something in Spotify, your browser, VLC…';
     }
     root.classList.toggle('idle', !m.active);
-    $('[data-act=toggle]').innerHTML = m.playing ? icons.pause : icons.play;
-    $('[data-act=prev]').disabled = m.active && m.canPrev === false;
-    $('[data-act=next]').disabled = m.active && m.canNext === false;
     if (trackChanged) paintArt();
     if (m.playing) startCapture(); else scheduleStop();
   }
@@ -77,20 +68,6 @@ Wingits.register('music', ({ root, api }) => {
   api.onMedia(setMedia);
   api.onMediaArt(({ key, art: a }) => { arts.set(key, a); if (arts.size > 6) arts.delete(arts.keys().next().value); if (key === m.key) paintArt(); });
   api.getMedia().then(({ state, art: a }) => { if (a) arts.set(a.key, a.art); setMedia(state); });
-
-  root.addEventListener('click', (e) => {
-    const b = e.target.closest('[data-act]');
-    if (!b || b.disabled) return;
-    if (b.dataset.act === 'toggle') { m.playing = !m.playing; sampledAt = performance.now(); $('[data-act=toggle]').innerHTML = m.playing ? icons.pause : icons.play; }
-    api.mediaCmd(b.dataset.act);
-  });
-  $('.mp-bar').addEventListener('click', (e) => {
-    if (!m.active || !m.duration || m.canSeek === false) return;
-    const r = e.currentTarget.getBoundingClientRect();
-    const t = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)) * m.duration;
-    m.position = t; sampledAt = performance.now();
-    api.mediaCmd('seek', t);
-  });
 
   /* progress (interpolated between helper updates) */
   setInterval(() => {

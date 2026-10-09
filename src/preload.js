@@ -29,7 +29,6 @@ contextBridge.exposeInMainWorld('wingits', {
   getScreen: () => invoke('screen:info'),
 
   getMedia: () => invoke('media:get'),
-  mediaCmd: (cmd, arg) => invoke('media:cmd', cmd, arg),
   onMedia: (cb) => {
     const h = (_e, s) => cb(s);
     ipcRenderer.on('media', h);

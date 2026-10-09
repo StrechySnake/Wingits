@@ -49,7 +49,3 @@ button:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--faint); border-radius: 99px; border: 2px solid transparent; background-clip: content-box; }
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: .001s !important; animation-iteration-count: 1 !important; transition-duration: .001s !important; }
-}

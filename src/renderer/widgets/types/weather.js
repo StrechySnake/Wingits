@@ -68,12 +68,12 @@ Wingits.register('weather', ({ root, api }) => {
       : '<div class="moon"></div><i class="star s1"></i><i class="star s2"></i><i class="star s3"></i><i class="star s4"></i>';
     let h = '';
     if (kind === 'clear') h = celestial;
-    else if (kind === 'partly') h = celestial + cloud({ right: -8 - 30, top: 70, w: 130, dur: 26 }) + cloud({ right: 52 - 30, top: 104, w: 90, scale: .9, dur: 34, delay: -12, tone: 'soft' });
-    else if (kind === 'cloudy') h = cloud({ right: -10 - 30, top: 16, w: 160, dur: 30 }) + cloud({ right: 34 - 30, top: 58, w: 130, dur: 38, delay: -14, tone: 'soft' }) + cloud({ right: -8 - 30, top: 98, w: 105, dur: 33, delay: -6 });
-    else if (kind === 'rain') h = streaks(26, 'rdrop') + cloud({ right: -10 - 30, top: 12, w: 160, dur: 32, tone: 'dark' }) + cloud({ right: 40 - 30, top: 48, w: 120, dur: 40, delay: -15, tone: 'dark soft' });
-    else if (kind === 'storm') h = streaks(30, 'rdrop') + cloud({ right: -10 - 30, top: 10, w: 165, dur: 34, tone: 'dark' }) + cloud({ right: 46 - 30, top: 46, w: 120, dur: 42, delay: -16, tone: 'dark soft' })
+    else if (kind === 'partly') h = celestial + cloud({ right: -8 - 30, top: 70, w: 130, dur: 14 }) + cloud({ right: 52 - 30, top: 104, w: 90, scale: .9, dur: 18, delay: -12, tone: 'soft' });
+    else if (kind === 'cloudy') h = cloud({ right: -10 - 30, top: 16, w: 160, dur: 16 }) + cloud({ right: 34 - 30, top: 58, w: 130, dur: 20, delay: -14, tone: 'soft' }) + cloud({ right: -8 - 30, top: 98, w: 105, dur: 18, delay: -6 });
+    else if (kind === 'rain') h = streaks(26, 'rdrop') + cloud({ right: -10 - 30, top: 12, w: 160, dur: 17, tone: 'dark' }) + cloud({ right: 40 - 30, top: 48, w: 120, dur: 22, delay: -15, tone: 'dark soft' });
+    else if (kind === 'storm') h = streaks(30, 'rdrop') + cloud({ right: -10 - 30, top: 10, w: 165, dur: 18, tone: 'dark' }) + cloud({ right: 46 - 30, top: 46, w: 120, dur: 23, delay: -16, tone: 'dark soft' })
       + '<svg class="bolt" viewBox="0 0 24 40"><path d="M14 0 3 22h7l-3 18L21 15h-8z"/></svg><i class="flash"></i>';
-    else if (kind === 'snow') h = streaks(24, 'sflake') + cloud({ right: -10 - 30, top: 12, w: 160, dur: 36, tone: 'soft' }) + cloud({ right: 42 - 30, top: 50, w: 115, dur: 44, delay: -18, tone: 'soft' });
+    else if (kind === 'snow') h = streaks(24, 'sflake') + cloud({ right: -10 - 30, top: 12, w: 160, dur: 19, tone: 'soft' }) + cloud({ right: 42 - 30, top: 50, w: 115, dur: 24, delay: -18, tone: 'soft' });
     else if (kind === 'fog') h = '<i class="fogband" style="top:34px"></i><i class="fogband b" style="top:84px"></i><i class="fogband" style="top:134px;animation-delay:-9s"></i>';
     sky.className = `sky ${kind} ${isDay ? 'day' : 'night'}`;
     sky.innerHTML = h;

@@ -30,7 +30,7 @@ Wingits checks GitHub for a newer release each time it starts and then every 5 h
 | **Pomodoro** | Focus / short / long break ring timer with chime and notification; survives restarts |
 | **Countdown** | Days (and hours) until an event; click to edit |
 | **Sticky Note** | Autosaving, five pastel colors. Add as many as you like |
-| **Now Playing** | Shows whatever Windows is playing — Spotify, YouTube in your browser, VLC, Apple Music, media files in most players — with big album art, title/artist, progress (click to seek), previous / play-pause / next, and a live visualizer driven by your system audio. No background; text floats on your wallpaper |
+| **Now Playing** | Shows whatever Windows is playing — Spotify, YouTube in your browser, VLC, Apple Music, media files in most players — with big album art, title/artist, a progress bar and a live visualizer driven by your system audio. Display only (no buttons) and no background; text floats on your wallpaper. If a player supplies no artwork, it is looked up from the iTunes catalogue by artist and title |
 | **System** | Soft circular CPU and RAM dials |
 
 ## Using it
@@ -69,6 +69,7 @@ src/renderer/    dashboard UI and one small module per widget (widgets/types/*.j
 ## Known limitations
 
 * Widgets are ordinary always-below-apps windows, not part of the desktop itself, so **Win + D** (Show desktop) may hide them. Enable **Keep widgets on top** if you want them always visible.
+* If album art or track info looks wrong, the media helper writes diagnostics to `%TEMP%\wingits-media.log`.
 * Now Playing reads Windows' media session (the same one behind the volume flyout), so it shows any player that reports to Windows. A player that doesn't (some older or portable ones) won't appear. The visualizer uses system-audio loopback; if that is unavailable it falls back to a gentle idle animation (click the bars to retry).
 * Windows only has been designed for; Linux/macOS builds are untested.
 
