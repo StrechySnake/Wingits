@@ -1,7 +1,8 @@
-const { app, BrowserWindow, Tray, Menu, ipcMain, screen, nativeImage, shell, session, desktopCapturer } = require('electron');
+const { app, BrowserWindow, Tray, Menu, ipcMain, screen, nativeImage, shell, session, desktopCapturer, Notification } = require('electron');
 const path = require('path');
 const { Store } = require('./store');
 const { Media } = require('./media');
+const { Updater } = require('./updater');
 const { createStats } = require('./sysstats');
 const REG = require('../shared/registry');
 const { XP_PER_TASK } = require('../shared/progress');
@@ -13,7 +14,7 @@ const DASH_W = 1072, DASH_H = 700; // includes the transparent shadow margin
 
 if (!app.requestSingleInstanceLock()) { app.quit(); process.exit(0); }
 
-let store, stats, tray, dashboard, media;
+let store, stats, tray, dashboard, media, updater;
 let quitting = false;
 const widgetWins = new Map(); // id -> BrowserWindow
 
@@ -310,6 +311,10 @@ function registerIpc() {
     emit('layout');
   });
 
+  ipcMain.handle('update:get', () => updater.info);
+  ipcMain.handle('update:check', () => updater.check());
+  ipcMain.handle('update:open', () => { if (updater.info.url) shell.openExternal(updater.info.url); });
+
   ipcMain.handle('dash:minimize', () => dashboard?.hide());
   ipcMain.handle('dash:open', () => showDashboard());
   ipcMain.handle('app:quit', () => { quitting = true; app.quit(); });
@@ -344,6 +349,22 @@ app.whenReady().then(() => {
       .catch(() => cb({}));
   });
   registerIpc();
+
+  // Update checks: shortly after launch, then every 5 hours (can be switched off in settings).
+  updater = new Updater(require('../../package.json').version);
+  let notified = '';
+  updater.on('change', (info) => {
+    sendTo(dashboard, 'update', info);
+    if (info.status === 'available' && info.latest !== notified && S().settings.autoUpdateCheck) {
+      notified = info.latest;
+      if (Notification.isSupported()) {
+        const n = new Notification({ title: 'Wingits update available', body: `Version ${info.latest} is out — you have ${info.current}. Click to download.` });
+        n.on('click', () => shell.openExternal(info.url));
+        n.show();
+      }
+    }
+  });
+  updater.startSchedule(() => S().settings.autoUpdateCheck);
   seedFirstRun();
   for (const w of S().widgets) createWidgetWindow(w);
   createTray();

@@ -42,6 +42,15 @@ contextBridge.exposeInMainWorld('wingits', {
   },
   resizeWidget: (id, scale) => invoke('widget:resize', id, scale),
 
+  getUpdate: () => invoke('update:get'),
+  checkUpdate: () => invoke('update:check'),
+  openUpdate: () => invoke('update:open'),
+  onUpdate: (cb) => {
+    const h = (_e, i) => cb(i);
+    ipcRenderer.on('update', h);
+    return () => ipcRenderer.removeListener('update', h);
+  },
+
   minimize: () => invoke('dash:minimize'),
   quit: () => invoke('app:quit'),
 });

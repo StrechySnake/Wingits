@@ -15,6 +15,10 @@ Grab the latest installer from the [**Releases** page](../../releases/latest):
 
 No release yet? Open **Actions → Build & Release → Run workflow**, then download the `Wingits-windows` artifact from the finished run.
 
+## Updates
+
+Wingits checks GitHub for a newer release each time it starts and then every 5 hours. When one exists you get a notification and a banner in the main window with a **Download** button that opens the release page. Turn it off, or check on demand, under **Updates** in the main window's settings.
+
 ## Widgets
 
 | Widget | Notes |

@@ -131,6 +131,7 @@
   seg('#seg-pet', (v) => api.setPet({ kind: v }));
   $('#rng-opacity').addEventListener('input', (e) => api.setSettings({ opacity: +e.target.value }));
   $('#chk-top').addEventListener('change', (e) => api.setSettings({ alwaysOnTop: e.target.checked }));
+  $('#chk-update').addEventListener('change', (e) => { api.setSettings({ autoUpdateCheck: e.target.checked }); if (e.target.checked) api.checkUpdate(); });
   $('#chk-login').addEventListener('change', (e) => api.setSettings({ launchAtLogin: e.target.checked }));
   const commit = (sel, fn) => { const el = $(sel); el.addEventListener('change', () => fn(el.value)); el.addEventListener('keydown', (e) => { if (e.key === 'Enter') el.blur(); }); };
   commit('#inp-city', (v) => api.setSettings({ city: v.trim() }));
@@ -149,6 +150,7 @@
     $('#out-opacity').textContent = Math.round(s.opacity * 100) + '%';
     $('#chk-top').checked = s.alwaysOnTop;
     $('#chk-login').checked = s.launchAtLogin;
+    $('#chk-update').checked = s.autoUpdateCheck !== false;
     $('#btn-visible').textContent = s.widgetsVisible ? 'Hide widgets' : 'Show widgets';
     if (document.activeElement !== $('#inp-city')) $('#inp-city').value = s.city;
     if (document.activeElement !== $('#inp-pet')) $('#inp-pet').value = state.pet.name;
@@ -158,7 +160,28 @@
     $('#pet-bar').style.width = Math.round(info.pct * 100) + '%';
   }
 
-  function render() { renderSettings(); renderTiles(); }
+  /* ---------- updates ---------- */
+  let upd = await api.getUpdate();
+  let dismissed = '';
+  function renderUpdate() {
+    const banner = $('#update-banner');
+    banner.hidden = !(upd.status === 'available' && upd.latest !== dismissed);
+    $('#upd-ver').textContent = upd.latest ? 'v' + upd.latest : '';
+    $('#upd-status').textContent = {
+      idle: `v${upd.current}`,
+      checking: 'Checking…',
+      'up-to-date': `v${upd.current} · up to date`,
+      available: `v${upd.latest} available`,
+      error: `v${upd.current} · couldn't check`,
+    }[upd.status];
+    $('#upd-check').disabled = upd.status === 'checking';
+  }
+  $('#upd-get').addEventListener('click', () => api.openUpdate());
+  $('#upd-x').addEventListener('click', () => { dismissed = upd.latest; renderUpdate(); });
+  $('#upd-check').addEventListener('click', () => api.checkUpdate());
+  api.onUpdate((i) => { upd = i; renderUpdate(); });
+
+  function render() { renderSettings(); renderTiles(); renderUpdate(); }
   api.onState((s) => { state = s; render(); });
   render();
 })();

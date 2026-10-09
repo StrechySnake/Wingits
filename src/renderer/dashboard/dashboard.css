@@ -104,3 +104,10 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px;
 .pet-stats-line { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 8px; font-weight: 600; }
 .bar { height: 6px; border-radius: 99px; background: var(--faint); overflow: hidden; }
 .bar i { display: block; height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width .6s var(--ease); }
+
+.update-banner { display: flex; align-items: center; gap: 10px; margin: 0 20px 12px; padding: 8px 10px 8px 18px; border-radius: 99px; font-size: 13px;
+  background: linear-gradient(135deg, rgba(155, 140, 255, .28), rgba(255, 155, 208, .28)); border: 1px solid var(--border); animation: pop-in .4s var(--ease) both; }
+.update-banner[hidden] { display: none; }
+.update-banner > span { flex: 1; }
+.pill-btn.solid { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; }
+.upd-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12px; margin: 2px 0 6px; }

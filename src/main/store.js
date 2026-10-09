@@ -10,6 +10,7 @@ const DEFAULTS = () => ({
     units: 'c',           // 'c' | 'f'
     city: '',             // empty = locate by IP
     widgetsVisible: true,
+    autoUpdateCheck: true,
   },
   widgets: [],            // { id, type, x, y }
   tasks: [],              // { id, text, done, rewarded }
