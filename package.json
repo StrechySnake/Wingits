@@ -1,6 +1,6 @@
 {
   "name": "wingits",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "description": "Soft, transparent desktop widgets for Windows — weather, tasks, a pet that grows with your to-dos, and more.",
   "main": "src/main/main.js",
   "author": "Wingits",

@@ -17,7 +17,9 @@ No release yet? Open **Actions → Build & Release → Run workflow**, then down
 
 ## Updates
 
-Wingits checks GitHub for a newer release each time it starts and then every 5 hours. When one exists you get a notification and a banner in the main window with a **Download** button that opens the release page. Turn it off, or check on demand, under **Updates** in the main window's settings.
+Wingits checks GitHub for a newer release each time it starts and then every 5 hours. With **Install automatically** on (the default, installed Windows build only) it downloads the new installer, verifies its SHA-256 checksum, installs it silently and restarts itself. The portable build, or turning that option off, shows a banner with a **Download** button instead. Everything lives under **Updates** in the main window's settings, including **Check now**.
+
+> **The repository must be public for other people's copies to update.** GitHub hides a private repository's releases from anyone who isn't signed in, so an unauthenticated app gets a "not found". Wingits now says so in the banner instead of silently reporting "up to date". While the repo is private you can paste a GitHub personal access token (read access to the repo's contents) into **Updates → GitHub token**; it is stored only in your local settings file and is never shown to the widgets.
 
 ## Developer mode
 

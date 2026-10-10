@@ -11,6 +11,8 @@ const DEFAULTS = () => ({
     city: '',             // empty = locate by IP
     widgetsVisible: true,
     autoUpdateCheck: true,
+    autoInstallUpdates: true,   // download + install new releases by itself (installed Windows build only)
+    updateToken: '',            // optional GitHub token; needed to see releases while the repo is private
     clock24: true,        // false = 12-hour clock with AM/PM
   },
   widgets: [],            // { id, type, x, y }

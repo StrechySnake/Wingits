@@ -1,4 +1,5 @@
 const { app, BrowserWindow, Tray, Menu, ipcMain, screen, nativeImage, shell, session, desktopCapturer, Notification } = require('electron');
+const { spawn } = require('child_process');
 const path = require('path');
 const { Store } = require('./store');
 const { Media } = require('./media');
@@ -35,7 +36,10 @@ let dev = devDefaults();
 let devSnapshot = null;
 
 /** What renderers see: the real state plus the (never persisted) dev overrides. */
-const view = () => ({ ...S(), dev });
+const view = () => {
+  const { updateToken, ...settings } = S().settings;      // the GitHub token never reaches the renderers
+  return { ...S(), settings: { ...settings, hasUpdateToken: !!updateToken }, dev };
+};
 
 function emit(kind = 'data') {
   store.save();
@@ -234,6 +238,7 @@ async function fetchWeather() {
 /* ---------- IPC ---------- */
 
 function applySettings(patch) {
+  patch = { ...patch }; delete patch.updateToken; delete patch.hasUpdateToken;
   const s = S().settings;
   Object.assign(s, patch);
   if ('alwaysOnTop' in patch) for (const w of widgetWins.values()) w.setAlwaysOnTop(!!s.alwaysOnTop, 'floating');
@@ -387,6 +392,12 @@ function registerIpc() {
 
   ipcMain.handle('update:get', () => updater.info);
   ipcMain.handle('update:check', () => updater.check());
+  ipcMain.handle('update:install', () => (updater.canInstall ? updater.install() : (updater.info.url && shell.openExternal(updater.info.url))));
+  ipcMain.handle('update:setToken', (_e, token) => {
+    S().settings.updateToken = String(token || '').trim();
+    emit('data');
+    return updater.check();
+  });
   ipcMain.handle('update:open', () => { if (updater.info.url) shell.openExternal(updater.info.url); });
 
   ipcMain.handle('dash:minimize', () => dashboard?.hide());
@@ -424,19 +435,30 @@ app.whenReady().then(() => {
   });
   registerIpc();
 
-  // Update checks: shortly after launch, then every 5 hours (can be switched off in settings).
-  updater = new Updater(require('../../package.json').version);
+  // Update checks: shortly after launch, then every 5 hours. New releases can install themselves.
+  const canInstall = (app.isPackaged && process.platform === 'win32' && !process.env.PORTABLE_EXECUTABLE_FILE) || !!process.env.WINGITS_UPDATE_DRYRUN;
+  updater = new Updater(require('../../package.json').version, { getToken: () => S().settings.updateToken, canInstall });
   let notified = '';
   updater.on('change', (info) => {
     sendTo(dashboard, 'update', info);
-    if (info.status === 'available' && info.latest !== notified && S().settings.autoUpdateCheck) {
+    if (info.status !== 'available') return;
+    const auto = S().settings.autoInstallUpdates && canInstall && !dev.enabled;
+    if (info.latest !== notified && S().settings.autoUpdateCheck) {
       notified = info.latest;
       if (Notification.isSupported()) {
-        const n = new Notification({ title: 'Wingits update available', body: `Version ${info.latest} is out — you have ${info.current}. Click to download.` });
-        n.on('click', () => shell.openExternal(info.url));
+        const n = new Notification({ title: auto ? 'Updating Wingits' : 'Wingits update available', body: auto ? `Installing version ${info.latest}…` : `Version ${info.latest} is out — you have ${info.current}. Click to download.` });
+        if (!auto) n.on('click', () => shell.openExternal(info.url));
         n.show();
       }
     }
+    if (auto) updater.install();
+  });
+  updater.on('ready', (file) => {
+    if (process.env.WINGITS_UPDATE_DRYRUN) { console.log('UPDATE READY', file); return; }
+    // One-click NSIS installer: /S = silent, --force-run = start the new version when done.
+    spawn(file, ['/S', '--force-run'], { detached: true, stdio: 'ignore' }).unref();
+    quitting = true;
+    setTimeout(() => app.quit(), 400);
   });
   updater.startSchedule(() => S().settings.autoUpdateCheck);
   seedFirstRun();

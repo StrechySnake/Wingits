@@ -132,6 +132,7 @@
   seg('#seg-pet', (v) => api.setPet({ kind: v }));
   $('#rng-opacity').addEventListener('input', (e) => api.setSettings({ opacity: +e.target.value }));
   $('#chk-top').addEventListener('change', (e) => api.setSettings({ alwaysOnTop: e.target.checked }));
+  $('#chk-install').addEventListener('change', (e) => api.setSettings({ autoInstallUpdates: e.target.checked }));
   $('#chk-update').addEventListener('change', (e) => { api.setSettings({ autoUpdateCheck: e.target.checked }); if (e.target.checked) api.checkUpdate(); });
   $('#chk-login').addEventListener('change', (e) => api.setSettings({ launchAtLogin: e.target.checked }));
   const commit = (sel, fn) => { const el = $(sel); el.addEventListener('change', () => fn(el.value)); el.addEventListener('keydown', (e) => { if (e.key === 'Enter') el.blur(); }); };
@@ -153,6 +154,10 @@
     $('#chk-top').checked = s.alwaysOnTop;
     $('#chk-login').checked = s.launchAtLogin;
     $('#chk-update').checked = s.autoUpdateCheck !== false;
+    $('#chk-install').checked = s.autoInstallUpdates !== false;
+    $('#chk-install').disabled = !upd.canInstall;
+    $('#chk-install').closest('.toggle').title = upd.canInstall ? '' : 'Only the installed Windows version can update itself; the portable build opens the download page.';
+    $('#inp-token').placeholder = s.hasUpdateToken ? '••••••••  (token saved)' : 'ghp_… (stored on this PC only)';
     $('#btn-visible').textContent = s.widgetsVisible ? 'Hide widgets' : 'Show widgets';
     if (document.activeElement !== $('#inp-city')) $('#inp-city').value = s.city;
     if (document.activeElement !== $('#inp-pet')) $('#inp-pet').value = state.pet.name;
@@ -165,21 +170,42 @@
   /* ---------- updates ---------- */
   let upd = await api.getUpdate();
   let dismissed = '';
+  const REASONS = {
+    private: 'Can\u2019t see releases: the repository is private. Make it public, or add a GitHub token below.',
+    token: 'GitHub rejected the token, or it can\u2019t read this repository.',
+    rate: 'GitHub rate limit reached; try again later.',
+    network: 'Couldn\u2019t reach GitHub.',
+    download: 'The download failed. Try again.',
+  };
   function renderUpdate() {
-    const banner = $('#update-banner');
-    banner.hidden = !(upd.status === 'available' && upd.latest !== dismissed);
-    $('#upd-ver').textContent = upd.latest ? 'v' + upd.latest : '';
-    $('#upd-status').textContent = {
+    const pct = Math.round((upd.progress || 0) * 100);
+    const banner = $('#update-banner'), v = upd.latest ? 'v' + upd.latest : '';
+    const warn = upd.status === 'error' && (upd.reason === 'private' || upd.reason === 'token');
+    const show = (upd.status === 'available' && upd.latest !== dismissed) || upd.status === 'downloading' || upd.status === 'installing' || (warn && dismissed !== 'warn');
+    banner.hidden = !show;
+    banner.classList.toggle('dev', warn);
+    $('#upd-text').innerHTML = ({
+      available: `\u2728 <b>Wingits ${v}</b> is available`,
+      downloading: `\u2b07\ufe0f Downloading <b>${v}</b>\u2026 ${pct}%`,
+      installing: `\ud83d\udd04 Installing <b>${v}</b> \u2014 Wingits will restart`,
+    })[upd.status] || `\u26a0\ufe0f ${REASONS[upd.reason] || ''}`;
+    $('#upd-get').hidden = !(upd.status === 'available');
+    $('#upd-get').textContent = upd.canInstall ? 'Update now' : 'Download';
+    $('#upd-x').hidden = upd.status === 'downloading' || upd.status === 'installing';
+    $('#upd-status').textContent = ({
       idle: `v${upd.current}`,
-      checking: 'Checking…',
-      'up-to-date': `v${upd.current} · up to date`,
+      checking: 'Checking\u2026',
+      'up-to-date': `v${upd.current} \u00b7 up to date`,
       available: `v${upd.latest} available`,
-      error: `v${upd.current} · couldn't check`,
-    }[upd.status];
-    $('#upd-check').disabled = upd.status === 'checking';
+      downloading: `Downloading v${upd.latest}\u2026 ${pct}%`,
+      installing: `Installing v${upd.latest}\u2026`,
+    })[upd.status] || `v${upd.current} \u00b7 ${REASONS[upd.reason] || 'couldn\u2019t check'}`;
+    $('#upd-check').disabled = ['checking', 'downloading', 'installing'].includes(upd.status);
   }
-  $('#upd-get').addEventListener('click', () => api.openUpdate());
-  $('#upd-x').addEventListener('click', () => { dismissed = upd.latest; renderUpdate(); });
+  $('#upd-get').addEventListener('click', () => api.installUpdate());
+  $('#btn-token').addEventListener('click', () => { api.setUpdateToken($('#inp-token').value); $('#inp-token').value = ''; });
+  $('#inp-token').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#btn-token').click(); });
+  $('#upd-x').addEventListener('click', () => { dismissed = upd.status === 'error' ? 'warn' : upd.latest; renderUpdate(); });
   $('#upd-check').addEventListener('click', () => api.checkUpdate());
   api.onUpdate((i) => { upd = i; renderUpdate(); });
 
