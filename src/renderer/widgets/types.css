@@ -99,8 +99,12 @@ li:hover .del { opacity: 1; } .del:hover { background: rgba(255, 90, 110, .8); c
 .pet-stage { position: relative; }
 .pet-stage.hop { animation: hop .6s var(--ease); }
 @keyframes hop { 30% { transform: translateY(-14px); } 60% { transform: translateY(0); } 75% { transform: translateY(-5px); } }
-.pet-canvas { image-rendering: pixelated; display: block; cursor: pointer; filter: drop-shadow(0 6px 6px rgba(0, 0, 0, .25)); animation: bob 1.6s steps(2, jump-none) infinite alternate; }
-@keyframes bob { to { transform: translateY(-3px); } }
+.pet-canvas { image-rendering: pixelated; display: block; cursor: pointer; filter: drop-shadow(0 5px 5px rgba(0, 0, 0, .25)); }
+.pet-bubble { position: absolute; top: 1px; transform: translateX(-50%); z-index: 6; padding: 5px 13px; border-radius: 16px; background: #fff; color: #2b2b3a; font-size: 12.5px; font-weight: 600; white-space: nowrap; text-shadow: none; cursor: pointer; box-shadow: 0 3px 10px rgba(0, 0, 0, .25); }
+.pet-bubble[hidden] { display: none; }
+.pet-bubble::after { content: ''; position: absolute; left: 50%; bottom: -5px; width: 10px; height: 10px; background: inherit; border-radius: 2px; transform: translateX(-50%) rotate(45deg); }
+.pet-bubble.shuffle { animation: bubble-pop .45s var(--ease); }
+@keyframes bubble-pop { 0% { transform: translateX(-50%) scale(.6) rotate(-6deg); opacity: .4; } 40% { transform: translateX(-50%) scale(1.12) rotate(4deg); opacity: 1; } 70% { transform: translateX(-50%) scale(.97) rotate(-2deg); } 100% { transform: translateX(-50%) scale(1) rotate(0); } }
 .pet-pill { width: 138px; padding: 8px 14px 9px; border-radius: 99px; background: var(--glass); border: 1px solid var(--border); box-shadow: var(--shadow); }
 .pet-line { display: flex; justify-content: center; gap: 2px; font-size: 12px; margin-bottom: 5px; }
 .pet-lv { color: var(--muted); }
