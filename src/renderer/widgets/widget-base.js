@@ -43,6 +43,54 @@
     const root = card.querySelector('.body');
     card.querySelector('.close').addEventListener('click', () => api.removeWidget(id));
 
+    // Real backdrop blur: a transparent window can't see the desktop, so we paint a blurred copy of the
+    // wallpaper behind the glass, lined up with where the card is on screen (and re-aligned when it moves).
+    if (!def.bare) {
+      const wp = document.createElement('div');
+      wp.className = 'wp';
+      card.prepend(wp);
+      let img = null, lastKey = '';
+      const rectFor = (d, W) => {
+        const iw = W.w, ih = W.h;
+        let region = d;
+        if (W.style === 'span') {
+          const x0 = Math.min(...W.displays.map((q) => q.x)), y0 = Math.min(...W.displays.map((q) => q.y));
+          region = { x: x0, y: y0, width: Math.max(...W.displays.map((q) => q.x + q.width)) - x0, height: Math.max(...W.displays.map((q) => q.y + q.height)) - y0 };
+        }
+        let w, h;
+        if (W.style === 'stretch') { w = region.width; h = region.height; }
+        else if (W.style === 'center') { w = iw / (d.scaleFactor || 1); h = ih / (d.scaleFactor || 1); }
+        else { const k = (W.style === 'fit' ? Math.min : Math.max)(region.width / iw, region.height / ih); w = iw * k; h = ih * k; }
+        return { x: region.x + (region.width - w) / 2, y: region.y + (region.height - h) / 2, w, h };
+      };
+      const place = () => {
+        if (!img) return;
+        const sc = scale || 1, cw = def.w * sc, ch = def.h * sc;
+        const cx = window.screenX + 14, cy = window.screenY + 14;           // the shell is inset 14px in the window
+        const mx = cx + cw / 2, my = cy + ch / 2;
+        const d = img.displays.find((q) => mx >= q.x && mx < q.x + q.width && my >= q.y && my < q.y + q.height) || img.displays[0];
+        const r = rectFor(d, img);
+        const key = [cx, cy, sc, r.x, r.y, r.w, r.h].join();
+        if (key === lastKey) return;
+        lastKey = key;
+        wp.style.left = ((r.x - cx) / sc - 1) + 'px';
+        wp.style.top = ((r.y - cy) / sc - 1) + 'px';
+        wp.style.width = r.w / sc + 'px';
+        wp.style.height = r.h / sc + 'px';
+      };
+      const load = async () => {
+        const w = await api.getWallpaper().catch(() => null);
+        if (!w) return;
+        if (!img || img.url !== w.url) wp.style.backgroundImage = `url("${w.url}")`;
+        img = w; lastKey = '';
+        card.classList.add('has-wp');
+        place();
+      };
+      load();
+      setInterval(load, 60000);          // picks up wallpaper changes / slideshows
+      setInterval(place, 150);
+    }
+
     // Cards have a fixed design size; resizing scales them with CSS zoom (clamped per widget type).
     const unlimited = () => !!(state.dev && state.dev.unlimited);
     let scale = WingitsRegistry.clampScale(type, (state.widgets.find((w) => w.id === id) || {}).scale || 1, unlimited());

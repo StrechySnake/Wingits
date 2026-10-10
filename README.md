@@ -21,6 +21,10 @@ Wingits checks GitHub for a newer release each time it starts and then every 5 h
 
 > **The repository must be public for other people's copies to update.** GitHub hides a private repository's releases from anyone who isn't signed in, so an unauthenticated app gets a "not found". Wingits now says so in the banner instead of silently reporting "up to date". Using a token is entirely optional: if you keep the repo private you can choose to paste a GitHub personal access token (read access to the repo's contents) into **Updates → GitHub token**; it is stored only in your local settings file and is never shown to the widgets.
 
+## Blurred glass
+
+Widget cards blur your desktop wallpaper behind them (lined up with where each card sits). The **Transparency** slider controls how much of it shows through. It blurs the wallpaper only, not other windows that happen to be underneath.
+
 ## Timer bar
 
 While a Pomodoro timer is running or paused, a small pill at the bottom of the screen shows the time with an icon (target = focus, stopwatch = break). Hover it to reveal pause/resume, stop and × (hides the bar until the timer is started again). Turn it off under **Behavior → Timer bar on screen**.

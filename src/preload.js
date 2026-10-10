@@ -49,6 +49,7 @@ contextBridge.exposeInMainWorld('wingits', {
 
   onTimerBar: (cb) => { ipcRenderer.on('timerbar', (_e, s) => cb(s)); },
   timerBarCmd: (c) => ipcRenderer.send('timerbar:cmd', c),
+  getWallpaper: () => invoke('wallpaper:get'),
   getUpdate: () => invoke('update:get'),
   checkUpdate: () => invoke('update:check'),
   installUpdate: () => invoke('update:install'),

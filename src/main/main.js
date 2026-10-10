@@ -5,6 +5,7 @@ const { Store } = require('./store');
 const { Media } = require('./media');
 const { Updater } = require('./updater');
 const { TimerBar } = require('./timerbar');
+const { getWallpaper } = require('./wallpaper');
 const { createStats } = require('./sysstats');
 const REG = require('../shared/registry');
 const { XP_PER_TASK, xpForLevel } = require('../shared/progress');
@@ -331,6 +332,8 @@ function registerIpc() {
   });
 
   ipcMain.on('timerbar:cmd', (e, cmd) => { if (timerBar && timerBar.win && e.sender === timerBar.win.webContents) timerBar.command(String(cmd)); });
+
+  ipcMain.handle('wallpaper:get', () => getWallpaper().catch(() => null));
 
   ipcMain.handle('inst:set', (_e, id, patch) => {
     if (!S().widgets.some((q) => q.id === id)) return;
