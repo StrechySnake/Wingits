@@ -13,6 +13,7 @@ const DEFAULTS = () => ({
     autoUpdateCheck: true,
     autoInstallUpdates: true,   // download + install new releases by itself (installed Windows build only)
     updateToken: '',            // optional GitHub token; needed to see releases while the repo is private
+    timerBar: true,       // small always-visible pill at the bottom of the screen while a timer runs
     clock24: true,        // false = 12-hour clock with AM/PM
   },
   widgets: [],            // { id, type, x, y }

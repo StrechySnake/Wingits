@@ -134,6 +134,7 @@
   $('#chk-top').addEventListener('change', (e) => api.setSettings({ alwaysOnTop: e.target.checked }));
   $('#chk-install').addEventListener('change', (e) => api.setSettings({ autoInstallUpdates: e.target.checked }));
   $('#chk-update').addEventListener('change', (e) => { api.setSettings({ autoUpdateCheck: e.target.checked }); if (e.target.checked) api.checkUpdate(); });
+  $('#chk-timerbar').addEventListener('change', (e) => api.setSettings({ timerBar: e.target.checked }));
   $('#chk-login').addEventListener('change', (e) => api.setSettings({ launchAtLogin: e.target.checked }));
   const commit = (sel, fn) => { const el = $(sel); el.addEventListener('change', () => fn(el.value)); el.addEventListener('keydown', (e) => { if (e.key === 'Enter') el.blur(); }); };
   commit('#inp-city', (v) => api.setSettings({ city: v.trim() }));
@@ -153,6 +154,7 @@
     $('#out-opacity').textContent = Math.round(s.opacity * 100) + '%';
     $('#chk-top').checked = s.alwaysOnTop;
     $('#chk-login').checked = s.launchAtLogin;
+    $('#chk-timerbar').checked = s.timerBar !== false;
     $('#chk-update').checked = s.autoUpdateCheck !== false;
     $('#chk-install').checked = s.autoInstallUpdates !== false;
     $('#chk-install').disabled = !upd.canInstall;

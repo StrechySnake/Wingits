@@ -1,0 +1,44 @@
+<!doctype html>
+<html data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'self'">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; background: transparent; overflow: hidden; font: 600 13px/1 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif; -webkit-user-select: none; user-select: none; }
+  body { display: flex; align-items: flex-end; justify-content: center; padding-bottom: 12px; }
+  .pill {
+    display: flex; align-items: center; height: 32px; padding: 0 12px; gap: 8px; border-radius: 99px;
+    background: #14151f; color: #f3f2ff; border: 1px solid rgba(255, 255, 255, .1);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .35); cursor: default;
+    opacity: 0; transform: translateY(8px) scale(.96); transition: opacity .3s ease, transform .35s cubic-bezier(.2, .8, .2, 1);
+  }
+  .pill.in { opacity: 1; transform: none; }
+  .side { display: flex; align-items: center; gap: 2px; max-width: 0; opacity: 0; overflow: hidden; transition: max-width .3s cubic-bezier(.2, .8, .2, 1), opacity .2s ease; }
+  .pill.open .side { max-width: 60px; opacity: 1; }
+  .mid { display: flex; align-items: center; gap: 7px; }
+  .mid svg { width: 14px; height: 14px; fill: none; stroke: #b9a8ff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  .pill.normal .mid svg { stroke: #7fe0c3; }
+  .time { font-variant-numeric: tabular-nums; letter-spacing: .02em; min-width: 38px; text-align: center; }
+  .pill.paused .time { opacity: .6; }
+  button { all: unset; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; cursor: pointer; flex: none; transition: background .15s; }
+  button:hover { background: rgba(255, 255, 255, .14); }
+  button.x:hover { background: rgba(255, 90, 110, .9); }
+  button svg { width: 12px; height: 12px; fill: currentColor; }
+  button.x svg { stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; fill: none; }
+</style>
+</head>
+<body>
+  <div class="pill" id="pill">
+    <div class="side" id="left">
+      <button id="b-toggle" title="Pause"></button>
+      <button id="b-stop" title="Stop"><svg viewBox="0 0 12 12"><rect x="1.5" y="1.5" width="9" height="9" rx="2.4"/></svg></button>
+    </div>
+    <div class="mid"><span id="ico"></span><span class="time" id="time">--:--</span></div>
+    <div class="side" id="right">
+      <button class="x" id="b-close" title="Close for this session"><svg viewBox="0 0 12 12"><path d="M2.5 2.5l7 7M9.5 2.5l-7 7"/></svg></button>
+    </div>
+  </div>
+  <script src="timerbar.js"></script>
+</body>
+</html>

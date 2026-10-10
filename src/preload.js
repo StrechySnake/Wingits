@@ -47,6 +47,8 @@ contextBridge.exposeInMainWorld('wingits', {
   devSetLevel: (l) => invoke('dev:setLevel', l),
   devTasks: (a) => invoke('dev:tasks', a),
 
+  onTimerBar: (cb) => { ipcRenderer.on('timerbar', (_e, s) => cb(s)); },
+  timerBarCmd: (c) => ipcRenderer.send('timerbar:cmd', c),
   getUpdate: () => invoke('update:get'),
   checkUpdate: () => invoke('update:check'),
   installUpdate: () => invoke('update:install'),

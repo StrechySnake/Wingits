@@ -4,6 +4,7 @@ const path = require('path');
 const { Store } = require('./store');
 const { Media } = require('./media');
 const { Updater } = require('./updater');
+const { TimerBar } = require('./timerbar');
 const { createStats } = require('./sysstats');
 const REG = require('../shared/registry');
 const { XP_PER_TASK, xpForLevel } = require('../shared/progress');
@@ -15,7 +16,7 @@ const DASH_W = 1072, DASH_H = 700; // includes the transparent shadow margin
 
 if (!app.requestSingleInstanceLock()) { app.quit(); process.exit(0); }
 
-let store, stats, tray, dashboard, media, updater;
+let store, stats, tray, dashboard, media, updater, timerBar;
 let quitting = false;
 const widgetWins = new Map(); // id -> BrowserWindow
 
@@ -47,6 +48,7 @@ function emit(kind = 'data') {
     for (const w of widgetWins.values()) sendTo(w, 'state', view());
   }
   sendTo(dashboard, 'state', view());
+  timerBar?.sync();
 }
 
 /* ---------- windows ---------- */
@@ -328,6 +330,8 @@ function registerIpc() {
     win.setBounds({ x: Math.round(x), y: Math.round(y), width: b.width, height: b.height });
   });
 
+  ipcMain.on('timerbar:cmd', (e, cmd) => { if (timerBar && timerBar.win && e.sender === timerBar.win.webContents) timerBar.command(String(cmd)); });
+
   ipcMain.handle('inst:set', (_e, id, patch) => {
     if (!S().widgets.some((q) => q.id === id)) return;
     S().inst[id] = { ...(S().inst[id] || {}), ...patch };
@@ -434,6 +438,12 @@ app.whenReady().then(() => {
       .catch(() => cb({}));
   });
   registerIpc();
+  timerBar = new TimerBar({
+    preload: PRELOAD, page: path.join(RENDERER, 'timerbar', 'index.html'),
+    getState: S, getDev: () => dev, enabled: () => S().settings.timerBar !== false,
+    setInst: (id, patch) => { S().inst[id] = { ...(S().inst[id] || {}), ...patch }; emit('data'); },
+  });
+  screen.on('display-metrics-changed', () => timerBar.place());
 
   // Update checks: shortly after launch, then every 5 hours. New releases can install themselves.
   const canInstall = (app.isPackaged && process.platform === 'win32' && !process.env.PORTABLE_EXECUTABLE_FILE) || !!process.env.WINGITS_UPDATE_DRYRUN;
@@ -465,8 +475,9 @@ app.whenReady().then(() => {
   for (const w of S().widgets) createWidgetWindow(w);
   createTray();
   createDashboard();
+  timerBar.sync();
 });
 
 app.on('second-instance', showDashboard);
-app.on('before-quit', () => { quitting = true; media?.stop(); store?.flush(); });
+app.on('before-quit', () => { quitting = true; timerBar?.destroy(); media?.stop(); store?.flush(); });
 app.on('window-all-closed', (e) => { if (!quitting) e.preventDefault(); });
