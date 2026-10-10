@@ -157,7 +157,6 @@
     $('#chk-install').checked = s.autoInstallUpdates !== false;
     $('#chk-install').disabled = !upd.canInstall;
     $('#chk-install').closest('.toggle').title = upd.canInstall ? '' : 'Only the installed Windows version can update itself; the portable build opens the download page.';
-    $('#inp-token').placeholder = s.hasUpdateToken ? '••••••••  (token saved)' : 'ghp_… (stored on this PC only)';
     $('#btn-visible').textContent = s.widgetsVisible ? 'Hide widgets' : 'Show widgets';
     if (document.activeElement !== $('#inp-city')) $('#inp-city').value = s.city;
     if (document.activeElement !== $('#inp-pet')) $('#inp-pet').value = state.pet.name;
@@ -171,8 +170,7 @@
   let upd = await api.getUpdate();
   let dismissed = '';
   const REASONS = {
-    private: 'Can\u2019t see releases: the repository is private. Make it public, or add a GitHub token below.',
-    token: 'GitHub rejected the token, or it can\u2019t read this repository.',
+    private: 'Can\u2019t see releases: the GitHub repository is private. Make it public so updates can be found.',
     rate: 'GitHub rate limit reached; try again later.',
     network: 'Couldn\u2019t reach GitHub.',
     download: 'The download failed. Try again.',
@@ -180,7 +178,7 @@
   function renderUpdate() {
     const pct = Math.round((upd.progress || 0) * 100);
     const banner = $('#update-banner'), v = upd.latest ? 'v' + upd.latest : '';
-    const warn = upd.status === 'error' && (upd.reason === 'private' || upd.reason === 'token');
+    const warn = upd.status === 'error' && upd.reason === 'private';
     const show = (upd.status === 'available' && upd.latest !== dismissed) || upd.status === 'downloading' || upd.status === 'installing' || (warn && dismissed !== 'warn');
     banner.hidden = !show;
     banner.classList.toggle('dev', warn);
@@ -203,8 +201,6 @@
     $('#upd-check').disabled = ['checking', 'downloading', 'installing'].includes(upd.status);
   }
   $('#upd-get').addEventListener('click', () => api.installUpdate());
-  $('#btn-token').addEventListener('click', () => { api.setUpdateToken($('#inp-token').value); $('#inp-token').value = ''; });
-  $('#inp-token').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#btn-token').click(); });
   $('#upd-x').addEventListener('click', () => { dismissed = upd.status === 'error' ? 'warn' : upd.latest; renderUpdate(); });
   $('#upd-check').addEventListener('click', () => api.checkUpdate());
   api.onUpdate((i) => { upd = i; renderUpdate(); });

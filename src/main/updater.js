@@ -22,18 +22,16 @@ function compareVersions(a, b) {
 class Updater extends EventEmitter {
   /**
    * @param currentVersion  version of the running app
-   * @param opts.getToken   () => optional GitHub token (needed while the repository is private)
    * @param opts.canInstall whether this build can replace itself (installed Windows build, not portable)
    */
   constructor(currentVersion, opts = {}) {
     super();
     this.current = currentVersion;
-    this.getToken = opts.getToken || (() => '');
     this.canInstall = !!opts.canInstall;
     this.timer = null;
     this.asset = null;
     // status: idle | checking | up-to-date | available | downloading | installing | error
-    // reason (when status is error): private | token | rate | network | download
+    // reason (when status is error): private | rate | network | download
     this.info = { status: 'idle', current: currentVersion, latest: null, url: null, checkedAt: 0, reason: null, progress: 0, canInstall: this.canInstall };
   }
 
@@ -43,8 +41,7 @@ class Updater extends EventEmitter {
   }
 
   headers(extra = {}) {
-    const token = this.getToken();
-    return { Accept: 'application/vnd.github+json', 'User-Agent': 'Wingits-updater', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...extra };
+    return { Accept: 'application/vnd.github+json', 'User-Agent': 'Wingits-updater', ...extra };
   }
 
   async check() {
@@ -55,9 +52,9 @@ class Updater extends EventEmitter {
       if (res.status === 403 && res.headers.get('x-ratelimit-remaining') === '0') {
         this.set({ status: 'error', reason: 'rate', checkedAt: Date.now() });
       } else if (res.status === 404 || res.status === 401 || res.status === 403) {
-        // GitHub answers 404 for a *private* repository when no (or a wrong) token is sent.
+        // GitHub answers 404 for a *private* repository to anonymous requests.
         // This used to be mistaken for "no releases yet", which silently disabled updates.
-        this.set({ status: 'error', reason: this.getToken() ? 'token' : 'private', checkedAt: Date.now() });
+        this.set({ status: 'error', reason: 'private', checkedAt: Date.now() });
       } else if (!res.ok) {
         throw new Error('HTTP ' + res.status);
       } else {

@@ -50,7 +50,6 @@ contextBridge.exposeInMainWorld('wingits', {
   getUpdate: () => invoke('update:get'),
   checkUpdate: () => invoke('update:check'),
   installUpdate: () => invoke('update:install'),
-  setUpdateToken: (t) => invoke('update:setToken', t),
   openUpdate: () => invoke('update:open'),
   onUpdate: (cb) => {
     const h = (_e, i) => cb(i);

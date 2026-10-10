@@ -12,7 +12,6 @@ const DEFAULTS = () => ({
     widgetsVisible: true,
     autoUpdateCheck: true,
     autoInstallUpdates: true,   // download + install new releases by itself (installed Windows build only)
-    updateToken: '',            // optional GitHub token; needed to see releases while the repo is private
     clock24: true,        // false = 12-hour clock with AM/PM
   },
   widgets: [],            // { id, type, x, y }
@@ -35,6 +34,7 @@ class Store {
     try {
       const raw = JSON.parse(fs.readFileSync(this.file, 'utf8'));
       const d = DEFAULTS();
+      if (raw.settings) delete raw.settings.updateToken;   // tokens are no longer supported: drop any saved one
       this.state = {
         ...d, ...raw,
         settings: { ...d.settings, ...(raw.settings || {}) },

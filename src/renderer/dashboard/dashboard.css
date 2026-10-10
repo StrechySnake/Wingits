@@ -127,5 +127,4 @@ select.pill-input { height: 30px; padding: 0 10px; color: var(--text); }
 select.pill-input option { color: #222; }
 .toggle.small { font-size: 12px; padding: 4px 0; }
 .toggle.small i { width: 34px; height: 20px; } .toggle.small i::after { width: 14px; height: 14px; } .toggle.small input:checked + i::after { transform: translateX(14px); }
-.token-field { margin-top: 6px; } .token-field label { font-size: 11.5px; }
 .upd-row { flex-wrap: wrap; } #upd-status { flex: 1; min-width: 0; line-height: 1.35; }
