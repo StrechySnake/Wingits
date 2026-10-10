@@ -234,7 +234,7 @@ Wingits.register('pet', ({ root, api }) => {
     poly([[9, 36], [39, 36], [36, 48], [12, 48]], p.pot);
     poly([[7, 31], [41, 31], [41, 36], [7, 36]], p.potD); rect(9, 33, 30, 1, p.pot);
     ellipse(24, 31.5, 16, 2.4, p.soil);
-    const Hh = [11, 19, 27, 34, 38][stage], sc = 0.8 + stage * 0.45;
+    const Hh = [11, 19, 26, 30, 33][stage], sc = 0.8 + stage * 0.45;
     const sx = (f) => 24 + Math.sin(t * 1.2 + f * 1.4) * sc * f * f * 2.2;
     const sy = (f) => 31 - f * Hh;
     // stem
@@ -292,7 +292,7 @@ Wingits.register('pet', ({ root, api }) => {
     const k = tree.falling ? 160 : 12, c = 2 * Math.sqrt(k);
     tree.binV += ((target - tree.binX) * k - tree.binV * c) * dt;
     tree.binV = clamp(tree.binV, -110, 110);
-    tree.binX = clamp(tree.binX + tree.binV * dt, BIN_HALF + 1, W - BIN_HALF - 1);
+    tree.binX = clamp(tree.binX + tree.binV * dt, BIN_HALF + 4, W - BIN_HALF - 4);
     tree.bounce = Math.max(0, tree.bounce - dt * 4);
     const a = tree.falling;
     if (a) {
@@ -314,7 +314,7 @@ Wingits.register('pet', ({ root, api }) => {
 
   function drawTree(t, p) {
     O.x = 0; O.y = 0;
-    ellipse(51, 68, 50, 5, '#6bbf59'); ellipse(51, 69, 46, 3, '#58a64a');
+    ellipse(51, 66, 46, 3.5, '#6bbf59'); ellipse(51, 66.8, 42, 2, '#58a64a');
     // trunk and branches
     poly([[35, 68], [45, 68], [43, 36], [37, 36]], '#8a5a2c'); rect(38, 40, 1, 24, '#6f4720');
     for (const [x0, y0, x1, y1] of [[40, 40, 28, 28], [40, 38, 54, 26], [40, 34, 44, 16]]) for (let k = 0; k <= 12; k++) disc(x0 + ((x1 - x0) * k) / 12, y0 + ((y1 - y0) * k) / 12, 2.4 - k * 0.1, '#8a5a2c');
@@ -364,7 +364,7 @@ Wingits.register('pet', ({ root, api }) => {
   const COLORS = { heart: ['#ff5a7e', '#8e1b3d', '#ffd1dc'], star: ['#ffd24d', '#b8760a', '#fff6c8'], z: ['#dbe8ff', '#4b5f9c', '#ffffff'] };
   let parts = [];
   function burst(kind, n, cx) {
-    for (let i = 0; i < n; i++) parts.push({ kind, x: cx - 7 + rnd(-14, 14), y: rnd(20, 32), vx: rnd(-5, 5), vy: -rnd(13, 24), life: 1 });
+    for (let i = 0; i < n; i++) parts.push({ kind, x: cx - 7 + rnd(-14, 14), y: rnd(26, 34), vx: rnd(-5, 5), vy: -rnd(6, 12), life: 1 });
   }
   function drawParts(dt) {
     for (const p of parts) {
@@ -399,7 +399,7 @@ Wingits.register('pet', ({ root, api }) => {
   const $ = (s) => root.querySelector(s);
 
   /* ---------- the cat's day: sit, groom every 30-90 s, sleep in its bed from 22:00 to 07:00 ---------- */
-  const DAY_X = 9, BED_REST = 76, BED_MID = 52, WALK = 16, GROOM_MS = 5200;
+  const DAY_X = 10, BED_REST = 72, BED_MID = 52, WALK = 16, GROOM_MS = 5200;
   const hourNow = () => (st && st.dev && st.dev.hour !== null && st.dev.hour !== undefined ? st.dev.hour : new Date().getHours()); // dev mode can fake the hour
   const isNight = () => { const h = hourNow(); return h >= 22 || h < 7; };
   let mode = 'sit', catX = DAY_X, bedX = BED_REST, groomStart = 0, started = false, nextZAt = 0;
