@@ -83,14 +83,14 @@ Wingits.register('pet', ({ root, api }) => {
     const A = 0.75 + 0.35 * Math.sin(t * 0.37);
     const base = 0.75 + 0.4 * Math.sin(t * 0.9 + 0.5);
     const sway = A * 0.85 * (0.6 * Math.sin(t * 1.9) + 0.4 * Math.sin(t * 3.1 + 1));
-    const N = 44, step = 0.85;
+    const N = 22, step = 0.85;      // half the old length
     let x = 36, y = 42 + by;
     for (let i = 0; i < N; i++) {
       const f = i / (N - 1);
       let th = base + sway * (0.3 + 0.7 * f) + f * (0.55 * Math.sin(t * 4.1 - f * 6) + 0.28 * Math.sin(t * 6.7 - f * 9 + 2));
       for (const fl of flicks) { const age = t - fl.t0; th += fl.amp * Math.exp(-age * 1.5) * Math.sin(age * 10 - f * 6) * (0.25 + f); }
       x += Math.sin(th) * step; y -= Math.cos(th) * step;
-      const r = 2.1 - 0.75 * f;
+      const r = 1.25 - 0.4 * f;           // and about half the old thickness
       disc(x, y, r, f > 0.9 ? p.light : (Math.floor(f * 7) % 2 ? p.stripe : p.fur));
     }
   }
