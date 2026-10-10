@@ -234,7 +234,7 @@ Wingits.register('pet', ({ root, api }) => {
     poly([[9, 36], [39, 36], [36, 48], [12, 48]], p.pot);
     poly([[7, 31], [41, 31], [41, 36], [7, 36]], p.potD); rect(9, 33, 30, 1, p.pot);
     ellipse(24, 31.5, 16, 2.4, p.soil);
-    const Hh = [11, 19, 26, 30, 33][stage], sc = 0.8 + stage * 0.45;
+    const Hh = [11, 18, 24, 27, 29][stage], sc = 0.8 + stage * 0.45;
     const sx = (f) => 24 + Math.sin(t * 1.2 + f * 1.4) * sc * f * f * 2.2;
     const sy = (f) => 31 - f * Hh;
     // stem
