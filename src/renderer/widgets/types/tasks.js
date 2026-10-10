@@ -41,8 +41,9 @@ Wingits.register('tasks', ({ root, api }) => {
   });
 
   function update(s) {
-    const tasks = s.tasks;
-    const done = tasks.filter((t) => t.done).length;
+    // unfinished tasks first (in the order added), finished ones sink to the very bottom
+    const tasks = [...s.tasks.filter((t) => !t.done), ...s.tasks.filter((t) => t.done)];
+    const done = tasks.length - s.tasks.filter((t) => !t.done).length;
     $('.tasks-count').textContent = tasks.length ? `${done} of ${tasks.length} done` : 'Nothing yet';
     $('.clear-done').style.visibility = done ? 'visible' : 'hidden';
 

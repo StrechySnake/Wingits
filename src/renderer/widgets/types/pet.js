@@ -400,7 +400,7 @@ Wingits.register('pet', ({ root, api }) => {
 
   /* ---------- the cat's day: sit, groom every 30-90 s, sleep in its bed from 22:00 to 07:00 ---------- */
   const DAY_X = 9, BED_REST = 76, BED_MID = 52, WALK = 16, GROOM_MS = 5200;
-  const hourNow = () => (typeof window.__wingitsHour === 'number' ? window.__wingitsHour : new Date().getHours()); // override is a test hook
+  const hourNow = () => (st && st.dev && st.dev.hour !== null && st.dev.hour !== undefined ? st.dev.hour : new Date().getHours()); // dev mode can fake the hour
   const isNight = () => { const h = hourNow(); return h >= 22 || h < 7; };
   let mode = 'sit', catX = DAY_X, bedX = BED_REST, groomStart = 0, started = false, nextZAt = 0;
   let nextGroomAt = performance.now() + rnd(30000, 90000);
@@ -433,17 +433,18 @@ Wingits.register('pet', ({ root, api }) => {
 
   function frame() {
     if (!st) return;
-    const now = performance.now(), t = now / 1000, dt = clamp((now - last) / 1000, 0.001, 0.12);
+    const still = !!(st.dev && st.dev.noAnim);              // dev mode: animations off -> a single still pose
+    const now = performance.now(), t = still ? 1 : now / 1000, dt = still ? 0 : clamp((now - last) / 1000, 0.001, 0.12);
     last = now;
     const kind = st.pet.kind, level = levelInfo(st.pet.xp).level;
-    if (now >= nextBlinkAt) { blinkUntil = now + 150; nextBlinkAt = now + rnd(2500, 6000); }
-    const blink = now < blinkUntil;
+    if (!still && now >= nextBlinkAt) { blinkUntil = now + 150; nextBlinkAt = now + rnd(2500, 6000); }
+    const blink = !still && now < blinkUntil;
     ctx.clearRect(0, 0, W, H);
     let outlineCol = C[kind].out;
 
     if (kind === 'cat') {
       const p = C.cat;
-      catStep(now, dt);
+      if (!still) catStep(now, dt); else if (!started) catStep(now, 0);
       if (mode === 'sleep' || mode === 'rise') {
         drawBed(bedX);
         drawSleepingCat(bedX, t, p);
@@ -459,7 +460,7 @@ Wingits.register('pet', ({ root, api }) => {
       drawSlime(t, blink, C.slime, level);
     } else {
       const stg = stageOf(level);
-      if (stg >= 5) { updateTree(now, t); drawTree(t, C.plant); outlineCol = '#35502f'; }
+      if (stg >= 5) { if (!still) updateTree(now, t); drawTree(t, C.plant); outlineCol = '#35502f'; }
       else drawPlant(t, stg, C.plant);
     }
     outline(outlineCol);
@@ -494,8 +495,22 @@ Wingits.register('pet', ({ root, api }) => {
   cv.addEventListener('click', poke);
   bubble.addEventListener('click', (e) => { e.stopPropagation(); showBubble(true); });
 
+  let lastPulse = null;
+  function devPulse(name) {
+    const now = performance.now();
+    if (name === 'hearts') burst('heart', 6, catCx());
+    else if (name === 'stars') burst('star', 10, catCx());
+    else if (name === 'bubble' && st.pet.kind === 'cat') showBubble(false);
+    else if (name === 'groom' && st.pet.kind === 'cat' && mode === 'sit') { mode = 'groom'; groomStart = now; }
+    else if (name === 'apple') tree.nextDropAt = now;
+  }
+
   function update(s) {
     st = s;
+    if (s.dev) {
+      if (lastPulse !== null && s.dev.pulse.n !== lastPulse) devPulse(s.dev.pulse.name);
+      lastPulse = s.dev.pulse.n;
+    }
     const info = levelInfo(s.pet.xp), stg = stageOf(info.level);
     $('.pet-name').textContent = s.pet.name;
     $('.pet-lv').textContent = ` Lv ${info.level}`;

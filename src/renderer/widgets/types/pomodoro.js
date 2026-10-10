@@ -1,4 +1,5 @@
-Wingits.register('pomodoro', ({ root, inst, setInst }) => {
+Wingits.register('pomodoro', (ctx) => {
+  const { root, inst, setInst } = ctx;
   const { icons } = Wingits;
   const MODES = { focus: { label: 'Focus', min: 25 }, short: { label: 'Short', min: 5 }, long: { label: 'Long', min: 15 } };
   const R = 62, C = 2 * Math.PI * R;
@@ -24,7 +25,7 @@ Wingits.register('pomodoro', ({ root, inst, setInst }) => {
     const d = inst();
     return { mode: d.mode || 'focus', running: !!d.running, endsAt: d.endsAt || 0, remaining: d.remaining ?? MODES[d.mode || 'focus'].min * 60000, sessions: d.sessions || 0 };
   };
-  const total = (mode) => MODES[mode].min * 60000;
+  const total = (mode) => (ctx.state.dev && ctx.state.dev.fastTimers ? 10000 : MODES[mode].min * 60000);   // dev: 10 s sessions
 
   function chime() {
     try {

@@ -21,6 +21,11 @@
       </div>
     </header>
 
+    <div id="dev-banner" class="update-banner dev" hidden>
+      <span>🛠️ <b>Dev mode</b> — nothing is saved, and everything goes back when you turn it off</span>
+      <button id="dev-off" class="pill-btn solid">Turn off</button>
+    </div>
+
     <div id="update-banner" class="update-banner" hidden>
       <span>✨ <b>Wingits <span id="upd-ver"></span></b> is available</span>
       <button id="upd-get" class="pill-btn solid">Download</button>
@@ -68,6 +73,40 @@
         <h2>Updates</h2>
         <label class="toggle"><span>Check automatically</span><input type="checkbox" id="chk-update"><i></i></label>
         <div class="upd-row"><span id="upd-status" class="muted"></span><button id="upd-check" class="pill-btn">Check now</button></div>
+
+        <h2>Developer</h2>
+        <label class="toggle"><span>Dev mode</span><input type="checkbox" id="chk-dev"><i></i></label>
+        <p class="hint dev-note">Try anything: changes aren't saved, and turning this off puts everything back exactly as it was.</p>
+        <div id="dev-panel" hidden>
+          <div class="dev-group">
+            <label>Pet level</label>
+            <div class="dev-row"><input class="pill-input" id="dev-level" type="number" min="1" max="999" value="1"><button class="pill-btn" id="dev-level-set">Set</button></div>
+            <div class="dev-chips" id="dev-level-chips"><button data-l="1">1</button><button data-l="2">2</button><button data-l="5">5</button><button data-l="10">10</button><button data-l="25">25</button><button data-l="50">50</button></div>
+          </div>
+          <div class="dev-group">
+            <label>Time of day (cat bed, clock)</label>
+            <select class="pill-input" id="dev-hour"><option value="">Real time</option></select>
+          </div>
+          <div class="dev-group">
+            <label>Weather</label>
+            <select class="pill-input" id="dev-weather">
+              <option value="">Real weather</option><option value="0">Clear</option><option value="2">Partly cloudy</option><option value="3">Overcast</option>
+              <option value="45">Fog</option><option value="61">Rain</option><option value="71">Snow</option><option value="95">Thunderstorm</option>
+            </select>
+            <label class="toggle small"><span>Show it at night</span><input type="checkbox" id="dev-night"><i></i></label>
+          </div>
+          <label class="toggle small"><span>Disable animations</span><input type="checkbox" id="dev-noanim"><i></i></label>
+          <label class="toggle small"><span>Unlock widget size limits</span><input type="checkbox" id="dev-unlimited"><i></i></label>
+          <label class="toggle small"><span>Fast Pomodoro (10 s)</span><input type="checkbox" id="dev-fast"><i></i></label>
+          <div class="dev-group">
+            <label>Trigger</label>
+            <div class="dev-chips" id="dev-pulses"><button data-p="groom">Groom</button><button data-p="apple">Drop apple</button><button data-p="hearts">Hearts</button><button data-p="stars">Sparkles</button><button data-p="bubble">Bubble</button></div>
+          </div>
+          <div class="dev-group">
+            <label>Tasks</label>
+            <div class="dev-chips" id="dev-tasks"><button data-t="addSamples">Add 5 samples</button><button data-t="completeAll">Complete all</button></div>
+          </div>
+        </div>
 
         <h2>Companion</h2>
         <div class="field"><div class="seg" id="seg-pet"><button data-v="cat">🐱 Cat</button><button data-v="slime">🫧 Slime</button><button data-v="plant">🌱 Plant</button></div></div>

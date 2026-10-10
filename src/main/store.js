@@ -25,6 +25,7 @@ class Store {
     this.file = path.join(dir, 'wingits-state.json');
     this.state = DEFAULTS();
     this._timer = null;
+    this.frozen = false;   // dev mode: nothing is written to disk while true
     this.load();
   }
 
@@ -41,11 +42,13 @@ class Store {
   }
 
   save() {
+    if (this.frozen) return;
     clearTimeout(this._timer);
     this._timer = setTimeout(() => this.flush(), 250);
   }
 
   flush() {
+    if (this.frozen) return;
     clearTimeout(this._timer);
     try {
       fs.mkdirSync(path.dirname(this.file), { recursive: true });

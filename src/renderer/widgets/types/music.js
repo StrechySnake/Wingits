@@ -125,7 +125,8 @@ Wingits.register('music', ({ root, api }) => {
     c.setTransform(dpr, 0, 0, dpr, 0, 0);
     c.clearRect(0, 0, w, h);
     const t = (performance.now() - t0) / 1000;
-    const live = analyser && m.playing;
+    const still = document.documentElement.classList.contains('no-anim');
+    const live = analyser && m.playing && !still;
     if (live) analyser.getByteFrequencyData(freq);
     let b = 0;
     for (let i = 0; i < BARS; i++) {
@@ -135,7 +136,7 @@ Wingits.register('music', ({ root, api }) => {
         const lo = Math.floor(Math.pow(i / BARS, 1.7) * 90) + 1, hi = Math.max(lo + 1, Math.floor(Math.pow((i + 1) / BARS, 1.7) * 90) + 2);
         let sum = 0; for (let k = lo; k < hi; k++) sum += freq[k];
         v = Math.min(1, (sum / (hi - lo) / 255) * 1.25);
-      } else if (m.playing) { // no loopback available: gentle synthetic motion
+      } else if (m.playing && !still) { // no loopback available: gentle synthetic motion
         v = 0.25 + 0.2 * Math.sin(t * 3 + i * 0.7) * Math.sin(t * 1.3 + i * 0.25) + 0.15 * Math.sin(t * 5.1 + i);
       } else v = 0.04;
       levels[i] += (v - levels[i]) * (v > levels[i] ? 0.5 : 0.16);

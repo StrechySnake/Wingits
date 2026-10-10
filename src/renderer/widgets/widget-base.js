@@ -25,6 +25,7 @@
   function applyTheme(s) {
     document.documentElement.dataset.theme = s.settings.theme;
     document.documentElement.style.setProperty('--alpha', s.settings.opacity);
+    document.documentElement.classList.toggle('no-anim', !!(s.dev && s.dev.noAnim));
   }
 
   async function boot() {
@@ -43,8 +44,9 @@
     card.querySelector('.close').addEventListener('click', () => api.removeWidget(id));
 
     // Cards have a fixed design size; resizing scales them with CSS zoom (clamped per widget type).
-    const [minS, maxS] = WingitsRegistry.scaleRange(type);
-    let scale = WingitsRegistry.clampScale(type, (state.widgets.find((w) => w.id === id) || {}).scale || 1);
+    const unlimited = () => !!(state.dev && state.dev.unlimited);
+    let scale = WingitsRegistry.clampScale(type, (state.widgets.find((w) => w.id === id) || {}).scale || 1, unlimited());
+    let resizing = false;
     const applyScale = (s) => { scale = s; card.style.zoom = s; };
     card.style.width = def.w + 'px';
     card.style.height = def.h + 'px';
@@ -55,14 +57,16 @@
       if (e.button !== 0) return;
       e.preventDefault();
       grip.setPointerCapture(e.pointerId);
+      resizing = true;
       const s0 = scale, sx = e.screenX, sy = e.screenY;
       let raf = 0, next = s0;
       const move = (ev) => {
         const dx = ev.screenX - sx, dy = ev.screenY - sy;
-        next = WingitsRegistry.clampScale(type, s0 + (dx * def.w + dy * def.h) / (def.w * def.w + def.h * def.h));
+        next = WingitsRegistry.clampScale(type, s0 + (dx * def.w + dy * def.h) / (def.w * def.w + def.h * def.h), unlimited());
         if (!raf) raf = requestAnimationFrame(() => { raf = 0; applyScale(next); api.resizeWidget(id, next); });
       };
       const up = () => {
+        resizing = false;
         grip.removeEventListener('pointermove', move);
         grip.removeEventListener('pointerup', up);
         grip.removeEventListener('pointercancel', up);
@@ -115,6 +119,9 @@
       const prev = state;
       state = s;
       applyTheme(s);
+      // keep the zoom in step with the stored scale (it changes when dev mode is switched off)
+      const rec = s.widgets.find((w) => w.id === id);
+      if (rec && !resizing && Math.abs(WingitsRegistry.clampScale(type, rec.scale || 1, true) - scale) > 0.001) applyScale(WingitsRegistry.clampScale(type, rec.scale || 1, true));
       widget.update?.(s, prev);
     });
     widget.update?.(state, state);

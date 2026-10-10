@@ -41,6 +41,12 @@ contextBridge.exposeInMainWorld('wingits', {
   },
   resizeWidget: (id, scale) => invoke('widget:resize', id, scale),
 
+  devEnable: (on) => invoke('dev:enable', on),
+  devSet: (patch) => invoke('dev:set', patch),
+  devPulse: (name) => invoke('dev:pulse', name),
+  devSetLevel: (l) => invoke('dev:setLevel', l),
+  devTasks: (a) => invoke('dev:tasks', a),
+
   getUpdate: () => invoke('update:get'),
   checkUpdate: () => invoke('update:check'),
   openUpdate: () => invoke('update:open'),

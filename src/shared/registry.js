@@ -20,8 +20,8 @@
     const d = widgets[type] || {};
     return [d.minScale || SCALE_MIN, d.maxScale || SCALE_MAX];
   };
-  const clampScale = (type, s) => {
-    const [lo, hi] = scaleRange(type);
+  const clampScale = (type, s, unlimited = false) => {
+    const [lo, hi] = unlimited ? [0.25, 3] : scaleRange(type);
     return Math.min(hi, Math.max(lo, Number(s) || 1));
   };
   /** Outer window size for a widget at a given scale. */

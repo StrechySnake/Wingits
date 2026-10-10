@@ -15,6 +15,8 @@ Wingits.register('clock', (ctx) => {
 
   function tick() {
     const d = new Date();
+    const fake = ctx.state.dev && ctx.state.dev.hour;
+    if (fake !== null && fake !== undefined) d.setHours(fake);
     const h24 = is24();
     const h = h24 ? d.getHours() : (d.getHours() % 12 || 12);
     el.hm.textContent = `${h24 ? pad(h) : h}:${pad(d.getMinutes())}`;

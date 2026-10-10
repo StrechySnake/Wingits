@@ -111,3 +111,19 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px;
 .update-banner > span { flex: 1; }
 .pill-btn.solid { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; }
 .upd-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12px; margin: 2px 0 6px; }
+
+.update-banner.dev { background: linear-gradient(135deg, rgba(255, 190, 90, .3), rgba(255, 110, 110, .25)); }
+.dev-note { margin: 2px 0 10px; }
+#dev-panel { padding: 10px 12px 4px; border-radius: var(--radius-md); background: var(--faint); margin-bottom: 8px; }
+#dev-panel[hidden] { display: none; }
+.dev-group { margin-bottom: 10px; }
+.dev-group > label:not(.toggle) { display: block; font-size: 11.5px; color: var(--muted); margin-bottom: 5px; }
+.dev-row { display: flex; gap: 6px; }
+.dev-row .pill-input { flex: 1; min-width: 0; height: 30px; }
+.dev-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.dev-chips button { height: 24px; padding: 0 10px; border-radius: 99px; font-size: 11.5px; background: var(--faint); transition: background .2s; }
+.dev-chips button:hover { background: rgba(255, 255, 255, .22); }
+select.pill-input { height: 30px; padding: 0 10px; color: var(--text); }
+select.pill-input option { color: #222; }
+.toggle.small { font-size: 12px; padding: 4px 0; }
+.toggle.small i { width: 34px; height: 20px; } .toggle.small i::after { width: 14px; height: 14px; } .toggle.small input:checked + i::after { transform: translateX(14px); }

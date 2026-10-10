@@ -5,7 +5,7 @@ const { Media } = require('./media');
 const { Updater } = require('./updater');
 const { createStats } = require('./sysstats');
 const REG = require('../shared/registry');
-const { XP_PER_TASK } = require('../shared/progress');
+const { XP_PER_TASK, xpForLevel } = require('../shared/progress');
 
 const PRELOAD = path.join(__dirname, '..', 'preload.js');
 const RENDERER = path.join(__dirname, '..', 'renderer');
@@ -27,12 +27,22 @@ function sendTo(win, channel, payload) {
   if (win && !win.isDestroyed()) win.webContents.send(channel, payload);
 }
 /** 'data' changes go to every window; 'layout' changes only matter to the dashboard. */
+/* ---------- developer mode ----------
+ * While on, the store is frozen (nothing reaches disk) and a snapshot of the real state is kept;
+ * turning it off restores the snapshot, so everything returns to how it was before. */
+const devDefaults = () => ({ enabled: false, noAnim: false, hour: null, weather: null, night: false, unlimited: false, fastTimers: false, pulse: { n: 0, name: '' } });
+let dev = devDefaults();
+let devSnapshot = null;
+
+/** What renderers see: the real state plus the (never persisted) dev overrides. */
+const view = () => ({ ...S(), dev });
+
 function emit(kind = 'data') {
   store.save();
   if (kind === 'data') {
-    for (const w of widgetWins.values()) sendTo(w, 'state', S());
+    for (const w of widgetWins.values()) sendTo(w, 'state', view());
   }
-  sendTo(dashboard, 'state', S());
+  sendTo(dashboard, 'state', view());
 }
 
 /* ---------- windows ---------- */
@@ -56,7 +66,7 @@ function clampToDisplays(x, y, w, h) {
 function createWidgetWindow(w) {
   const def = REG.widgets[w.type];
   if (!def || widgetWins.has(w.id)) return;
-  const scale = REG.clampScale(w.type, w.scale || 1);
+  const scale = REG.clampScale(w.type, w.scale || 1, dev.unlimited);
   const { width, height } = REG.windowSize(w.type, scale);
   const pos = clampToDisplays(w.x, w.y, width, height);
   const win = new BrowserWindow({
@@ -227,13 +237,78 @@ function applySettings(patch) {
   const s = S().settings;
   Object.assign(s, patch);
   if ('alwaysOnTop' in patch) for (const w of widgetWins.values()) w.setAlwaysOnTop(!!s.alwaysOnTop, 'floating');
-  if ('launchAtLogin' in patch && app.isPackaged) app.setLoginItemSettings({ openAtLogin: !!s.launchAtLogin });
+  if ('launchAtLogin' in patch && app.isPackaged && !dev.enabled) app.setLoginItemSettings({ openAtLogin: !!s.launchAtLogin });
   if ('city' in patch || 'units' in patch) weatherCache.at = 0;
   emit('data');
 }
 
+function reconcileWindows() {
+  const want = new Set(S().widgets.map((w) => w.id));
+  for (const [id, win] of [...widgetWins]) if (!want.has(id)) { widgetWins.delete(id); if (!win.isDestroyed()) win.destroy(); }
+  const { alwaysOnTop, widgetsVisible } = S().settings;
+  for (const w of S().widgets) {
+    const win = widgetWins.get(w.id);
+    if (!win) { createWidgetWindow(w); continue; }
+    const { width, height } = REG.windowSize(w.type, REG.clampScale(w.type, w.scale || 1));
+    win.setBounds({ x: w.x, y: w.y, width, height });
+    win.setAlwaysOnTop(!!alwaysOnTop, 'floating');
+    if (widgetsVisible) win.showInactive(); else win.hide();
+  }
+  syncMedia();
+  refreshTray();
+}
+
+function startDev() {
+  if (dev.enabled) return;
+  store.flush();                                    // disk now matches memory; it stays that way until dev mode ends
+  devSnapshot = JSON.parse(JSON.stringify(S()));
+  store.frozen = true;
+  dev = { ...devDefaults(), enabled: true };
+  emit('data');
+}
+
+function endDev() {
+  if (!dev.enabled) return;
+  store.state = devSnapshot;                        // undo every change made during dev mode
+  devSnapshot = null;
+  dev = devDefaults();
+  store.frozen = false;
+  weatherCache.at = 0;
+  reconcileWindows();
+  emit('data');
+}
+
+function registerDevIpc() {
+  ipcMain.handle('dev:enable', (_e, on) => (on ? startDev() : endDev()));
+  ipcMain.handle('dev:set', (_e, patch) => {
+    if (!dev.enabled) return;
+    for (const k of ['noAnim', 'night', 'unlimited', 'fastTimers']) if (k in patch) dev[k] = !!patch[k];
+    if ('hour' in patch) dev.hour = patch.hour === null || patch.hour === '' ? null : Math.min(23, Math.max(0, parseInt(patch.hour, 10) || 0));
+    if ('weather' in patch) dev.weather = patch.weather === null || patch.weather === '' ? null : parseInt(patch.weather, 10);
+    emit('data');
+  });
+  ipcMain.handle('dev:pulse', (_e, name) => {
+    if (!dev.enabled) return;
+    dev.pulse = { n: dev.pulse.n + 1, name: String(name) };
+    emit('data');
+  });
+  ipcMain.handle('dev:setLevel', (_e, level) => {
+    if (!dev.enabled) return;
+    const L = Math.min(999, Math.max(1, parseInt(level, 10) || 1));
+    S().pet.xp = xpForLevel(L);
+    emit('data');
+  });
+  ipcMain.handle('dev:tasks', (_e, action) => {
+    if (!dev.enabled) return;
+    if (action === 'completeAll') S().tasks.forEach((t) => { t.done = true; t.rewarded = true; });
+    if (action === 'addSamples') for (const text of ['Water the plant', 'Reply to emails', 'Go for a walk', 'Read a chapter', 'Tidy the desk']) S().tasks.push({ id: uid(), text, done: false, rewarded: false });
+    emit('data');
+  });
+}
+
 function registerIpc() {
-  ipcMain.handle('state:get', () => S());
+  registerDevIpc();
+  ipcMain.handle('state:get', () => view());
 
   ipcMain.handle('settings:set', (_e, patch) => applySettings(patch || {}));
   ipcMain.handle('widgets:setVisible', (_e, v) => setWidgetsVisible(!!v));
@@ -303,7 +378,7 @@ function registerIpc() {
     const rec = S().widgets.find((q) => q.id === id);
     const win = widgetWins.get(id);
     if (!rec || !win) return;
-    rec.scale = REG.clampScale(rec.type, scale);
+    rec.scale = REG.clampScale(rec.type, scale, dev.enabled && dev.unlimited);
     const b = win.getBounds();
     const { width, height } = REG.windowSize(rec.type, rec.scale);
     win.setBounds({ x: b.x, y: b.y, width, height });

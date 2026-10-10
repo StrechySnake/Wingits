@@ -183,7 +183,37 @@
   $('#upd-check').addEventListener('click', () => api.checkUpdate());
   api.onUpdate((i) => { upd = i; renderUpdate(); });
 
-  function render() { renderSettings(); renderTiles(); renderUpdate(); }
+  /* ---------- developer mode (changes are never saved; turning it off restores everything) ---------- */
+  $('#dev-hour').innerHTML += Array.from({ length: 24 }, (_, h) => `<option value="${h}">${String(h).padStart(2, '0')}:00</option>`).join('');
+  $('#chk-dev').addEventListener('change', (e) => api.devEnable(e.target.checked));
+  $('#dev-off').addEventListener('click', () => api.devEnable(false));
+  $('#dev-level-set').addEventListener('click', () => api.devSetLevel($('#dev-level').value));
+  $('#dev-level').addEventListener('keydown', (e) => { if (e.key === 'Enter') api.devSetLevel(e.target.value); });
+  $('#dev-level-chips').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) api.devSetLevel(b.dataset.l); });
+  $('#dev-hour').addEventListener('change', (e) => api.devSet({ hour: e.target.value }));
+  $('#dev-weather').addEventListener('change', (e) => api.devSet({ weather: e.target.value }));
+  $('#dev-night').addEventListener('change', (e) => api.devSet({ night: e.target.checked }));
+  $('#dev-noanim').addEventListener('change', (e) => api.devSet({ noAnim: e.target.checked }));
+  $('#dev-unlimited').addEventListener('change', (e) => api.devSet({ unlimited: e.target.checked }));
+  $('#dev-fast').addEventListener('change', (e) => api.devSet({ fastTimers: e.target.checked }));
+  $('#dev-pulses').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) api.devPulse(b.dataset.p); });
+  $('#dev-tasks').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) api.devTasks(b.dataset.t); });
+
+  function renderDev() {
+    const d = state.dev || { enabled: false };
+    $('#chk-dev').checked = d.enabled;
+    $('#dev-panel').hidden = !d.enabled;
+    $('#dev-banner').hidden = !d.enabled;
+    document.documentElement.classList.toggle('no-anim', !!d.noAnim);
+    if (!d.enabled) return;
+    $('#dev-hour').value = d.hour === null ? '' : String(d.hour);
+    $('#dev-weather').value = d.weather === null ? '' : String(d.weather);
+    $('#dev-night').checked = d.night; $('#dev-noanim').checked = d.noAnim;
+    $('#dev-unlimited').checked = d.unlimited; $('#dev-fast').checked = d.fastTimers;
+    if (document.activeElement !== $('#dev-level')) $('#dev-level').value = levelInfo(state.pet.xp).level;
+  }
+
+  function render() { renderDev(); renderSettings(); renderTiles(); renderUpdate(); }
   api.onState((s) => { state = s; render(); });
   render();
 })();

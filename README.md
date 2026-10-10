@@ -19,13 +19,19 @@ No release yet? Open **Actions → Build & Release → Run workflow**, then down
 
 Wingits checks GitHub for a newer release each time it starts and then every 5 hours. When one exists you get a notification and a banner in the main window with a **Download** button that opens the release page. Turn it off, or check on demand, under **Updates** in the main window's settings.
 
+## Developer mode
+
+Turn on **Developer → Dev mode** in the main window to experiment with things that aren't normally available: jump the pet to any level (e.g. 50 for the apple tree), fake the time of day (cat bedtime, clock) or the weather, disable all animations, unlock the widget size limits, use 10-second Pomodoros, trigger grooming / falling apples / hearts, and add or complete tasks instantly.
+
+Nothing done in dev mode is saved. Turning it off restores everything — settings, pet, tasks, notes, widget layout and sizes — exactly as it was when you turned it on, and quitting while it's on leaves your saved data untouched.
+
 ## Widgets
 
 | Widget | Notes |
 | --- | --- |
 | **Date & Time** | Large light typography. 24-hour or 12-hour (AM/PM) under **Style → Time format**, or double-click the widget |
 | **Weather** | Live conditions from [Open-Meteo](https://open-meteo.com) (no API key) with looping scenes: drifting clouds, rain, snow, fog, thunderstorms, sun and moon. Auto-locates by IP, or set a city |
-| **To-Do** | Add, tick off and delete tasks. Each task pays out XP **once** |
+| **To-Do** | Add, tick off and delete tasks; finished tasks sink to the bottom of the list. Each task pays out XP **once** |
 | **Companion** | A hi-res pixel cat, slime or plant linked to the To-Do list — finishing a task gives XP, hearts and a hop; levelling up adds a bow tie, crown and wings. The cat has a thin, endlessly varied swishing tail, grooms itself every 30–90 s, and from 22:00 to 07:00 walks to its bed (which slides to the middle while it sleeps) and naps with floating z's. Click it for hearts (one batch per 3 s) and sometimes a speech bubble ("Meow" / "-no thoughts-"; click it to shuffle, it fades after 5 s). The plant grows bigger at levels 2, 5, 10, 25 and 50 — at 50 it becomes an apple tree whose apples fall into a wooden bin that slides over to catch them |
 | **Pomodoro** | Focus / short / long break ring timer with chime and notification; survives restarts |
 | **Countdown** | Days (and hours) until an event; click to edit |

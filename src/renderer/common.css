@@ -49,3 +49,6 @@ button:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--faint); border-radius: 99px; border: 2px solid transparent; background-clip: content-box; }
+
+/* Dev mode: "Disable animations" */
+html.no-anim *, html.no-anim *::before, html.no-anim *::after { animation: none !important; transition: none !important; }

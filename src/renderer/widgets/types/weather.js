@@ -79,32 +79,47 @@ Wingits.register('weather', ({ root, api }) => {
     sky.innerHTML = h;
   }
 
-  let lastKey = '', timer;
-  async function refresh() {
-    const w = await api.getWeather();
-    if (w.error) {
+  let lastKey = '', timer, lastData = null, lastError = '', devKey = '', dev = null;
+  const FAKE = { city: 'Dev mode', temp: 21, feels: 20, hi: 24, lo: 15, humidity: 55, code: 0, isDay: true };
+
+  // Renders the fetched weather, or (dev mode) the forced condition on top of it.
+  function show() {
+    const forced = dev && dev.weather !== null && dev.weather !== undefined;
+    let w = lastData;
+    if (forced) w = { ...(lastData || FAKE), code: dev.weather, isDay: !dev.night };
+    if (!w) {
       $('.wx-city').textContent = 'Weather';
-      $('.wx-cond').textContent = w.error;
+      $('.wx-cond').textContent = lastError || '\u00a0';
       return;
     }
     const [label, kind] = describe(w.code);
-    const unit = lastUnits === 'f' ? '°F' : '°C';
+    const unit = lastUnits === 'f' ? '\u00b0F' : '\u00b0C';
     $('.wx-city').textContent = w.city || 'Weather';
-    $('.wx-temp').textContent = Math.round(w.temp) + '°';
+    $('.wx-temp').textContent = Math.round(w.temp) + '\u00b0';
     $('.wx-cond').textContent = label;
     $('.wx-meta').innerHTML =
-      `H ${Math.round(w.hi)}° · L ${Math.round(w.lo)}°<br>Feels ${Math.round(w.feels)}${unit} · ${Math.round(w.humidity)}% humidity`;
+      `H ${Math.round(w.hi)}\u00b0 \u00b7 L ${Math.round(w.lo)}\u00b0<br>Feels ${Math.round(w.feels)}${unit} \u00b7 ${Math.round(w.humidity)}% humidity`;
     buildSky(kind, w.isDay);
+  }
+
+  async function refresh() {
+    const w = await api.getWeather();
+    if (w.error) { lastError = w.error; if (!lastData) show(); return; }
+    lastError = ''; lastData = w;
+    show();
   }
 
   let lastUnits = 'c';
   function update(s) {
     lastUnits = s.settings.units;
+    dev = s.dev && s.dev.enabled ? s.dev : null;
     const key = s.settings.units + '|' + s.settings.city;
     if (key !== lastKey) { lastKey = key; refresh(); }
+    const dk = dev ? `${dev.weather}|${dev.night}` : '';
+    if (dk !== devKey) { devKey = dk; show(); }
   }
   timer = setInterval(refresh, 15 * 60 * 1000);
   // retry soon if we started offline
-  setInterval(() => { if ($('.wx-temp').textContent === '--°') refresh(); }, 30000);
+  setInterval(() => { if (!lastData) refresh(); }, 30000);
   return { update };
 });
